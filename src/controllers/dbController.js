@@ -7,7 +7,7 @@ import hasPermission from '../middleware/rbac.js';
 import protect from '../middleware/authMiddleware.js';
 import mongoose from 'mongoose';
 
-// Multer setup for restore endpoint
+// Multer setup for restore endpoints
 const upload = multer({
   dest: BACKUP_DIR,
   limits: { fileSize: 1024 * 1024 * 100 } // 100MB max
