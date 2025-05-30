@@ -1,7 +1,7 @@
 import express from 'express';
 import userController from '../controllers/userController.js';
 import protect from '../middleware/authMiddleware.js';
-import hasRole from '../middleware/hasRoles.js';
+import hasPermission from '../middleware/rbac.js';
 
 const router = express.Router();
 
@@ -9,9 +9,9 @@ const router = express.Router();
 router.use(protect);
 
 // Admin-only route to get all users
-router.get('/', hasRole('admin'), userController.getAllUsers);
+router.get('/', hasPermission('view_users'), userController.getAllUsers);
 
 // Accessible by any logged-in user
-router.get('/:id', userController.getUserById);
+router.get('/:id', hasPermission('view_own_record'), userController.getUserById);
 
 export default router;
