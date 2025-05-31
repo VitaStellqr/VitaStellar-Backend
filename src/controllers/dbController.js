@@ -13,7 +13,7 @@ const upload = multer({
   limits: { fileSize: 1024 * 1024 * 100 } // 100MB max
 });
 
-// POST /admin/backup
+// POST /admin/backups
 export const backupDatabase = async (req, res) => {
   try {
     ensureBackupDir();
