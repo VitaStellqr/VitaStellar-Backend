@@ -1,17 +1,20 @@
-const { decrypt } = require('../utils/crypto.util'); // adjust path if needed
+const { decrypt } = require('../utils/crypto.util');
+
+const FIELDS_TO_DECRYPT = ['diagnosis', 'treatment', 'history'];
 
 function decryptPayload(req, res, next) {
-  res.decryptRecord = function (record) {
+  res.decryptRecord = (record) => {
     try {
-      const decrypted = { ...record };
-      ['diagnosis', 'treatment', 'history'].forEach((field) => {
-        if (decrypted[field]) {
-          decrypted[field] = decrypt(decrypted[field]);
+      if (!record) return record;
+      const decryptedRecord = { ...record._doc || record }; // support Mongoose docs
+      FIELDS_TO_DECRYPT.forEach((field) => {
+        if (decryptedRecord[field]) {
+          decryptedRecord[field] = decrypt(decryptedRecord[field]);
         }
       });
-      return decrypted;
+      return decryptedRecord;
     } catch (err) {
-      throw new Error('Decryption failed');
+      throw new Error('Decryption failed: ' + err.message);
     }
   };
   next();
