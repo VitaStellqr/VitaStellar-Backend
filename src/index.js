@@ -31,6 +31,9 @@ app.use('/appointments', appointmentsRouter); // Appointment routes
 // Error handling
 app.use(errorHandler);
 
+// Stellar anchoring routes with logging middleware attached inside routes file
+app.use('/stellar', stellarRoutes);
+
 // Start server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
