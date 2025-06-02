@@ -34,7 +34,9 @@
     "morgan": "^1.10.0",
     "node-cron": "^4.0.7",
     "nodemailer": "^7.0.3",
-    "pdfkit": "^0.17.1"
+    "pdfkit": "^0.17.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^8.57.0",
