@@ -3,12 +3,14 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import morgan from 'morgan';
 import swaggerUi from 'swagger-ui-express';
+
 import connectDB from './config/database.js';
 import errorHandler from './middleware/errorHandler.js';
 import routes from './routes/index.js';
-import appointmentsRouter from './controllers/appointments.controller.js'; 
+import appointmentsRouter from './controllers/appointments.controller.js';
 import specs from './config/swagger.js';
-import './cron/reminderJob.js'; 
+import stellarRoutes from './routes/stellar.js'; // ✅ Import Stellar routes
+import './cron/reminderJob.js'; // Cron job
 
 // Load environment variables
 dotenv.config();
@@ -35,13 +37,11 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, {
 
 // Routes
 app.use('/api', routes);
-app.use('/appointments', appointmentsRouter); // Appointment routes
+app.use('/appointments', appointmentsRouter);
+app.use('/stellar', stellarRoutes); // ✅ Use Stellar routes
 
 // Error handling
 app.use(errorHandler);
-
-// Stellar anchoring routes with logging middleware attached inside routes file
-app.use('/stellar', stellarRoutes);
 
 // Start server
 app.listen(port, () => {
