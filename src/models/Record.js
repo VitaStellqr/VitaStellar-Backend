@@ -1,5 +1,27 @@
 import mongoose from 'mongoose';
 
+const fileSchema = new mongoose.Schema({
+  cid: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  fileName: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  fileType: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  uploadedAt: {
+    type: Date,
+    default: Date.now,
+  }
+});
+
 const recordSchema = new mongoose.Schema({
   patientName: {
     type: String,
@@ -24,6 +46,7 @@ const recordSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  files: [fileSchema],
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
