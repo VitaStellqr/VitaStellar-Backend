@@ -46,6 +46,15 @@ const recordSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  clientUUID: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  syncTimestamp: {
+    type: Date,
+    required: true,
+  },
   files: [fileSchema],
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -67,5 +76,8 @@ recordSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
+
+// Create compound index for clientUUID and syncTimestamp
+recordSchema.index({ clientUUID: 1, syncTimestamp: 1 }, { unique: true });
 
 export default mongoose.model('Record', recordSchema); 
