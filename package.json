@@ -24,10 +24,12 @@
   "homepage": "https://github.com/Stellar-Uzima/Uzima-Backend#readme",
   "description": "",
   "dependencies": {
+    "apollo-server-express": "^3.13.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "graphql": "^16.11.0",
     "ipfs-http-client": "^60.0.1",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",

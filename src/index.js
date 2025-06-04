@@ -9,8 +9,9 @@ import errorHandler from './middleware/errorHandler.js';
 import routes from './routes/index.js';
 import appointmentsRouter from './controllers/appointments.controller.js';
 import specs from './config/swagger.js';
-import stellarRoutes from './routes/stellar.js'; // ✅ Import Stellar routes
-import './cron/reminderJob.js'; // Cron job
+import stellarRoutes from './routes/stellar.js';
+import { setupGraphQL } from './graphql/index.js'; // ✅ Import GraphQL setup
+import './cron/reminderJob.js';
 
 // Load environment variables
 dotenv.config();
@@ -38,7 +39,10 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, {
 // Routes
 app.use('/api', routes);
 app.use('/appointments', appointmentsRouter);
-app.use('/stellar', stellarRoutes); // ✅ Use Stellar routes
+app.use('/stellar', stellarRoutes);
+
+// GraphQL Setup
+await setupGraphQL(app); // ✅ Add this line
 
 // Error handling
 app.use(errorHandler);
@@ -47,6 +51,7 @@ app.use(errorHandler);
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
   console.log(`API Documentation available at http://localhost:${port}/docs`);
+  console.log(`GraphQL Playground available at http://localhost:${port}/graphql`);
 });
 
 export default app;
