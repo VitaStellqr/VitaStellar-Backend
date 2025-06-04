@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import js from '@eslint/js';
 import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
@@ -16,6 +17,16 @@ export default [
       globals: {
         console: 'readonly',
         process: 'readonly',
+        // Jest globals
+        describe: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        afterEach: 'readonly',
+        beforeEach: 'readonly',
+        it: 'readonly',
+        jest: 'readonly',
       },
     },
     rules: {
