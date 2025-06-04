@@ -1,6 +1,8 @@
 import express from 'express';
 import userRoutes from './userRoutes.js';
 import authRoutes from './authRoutes.js';
+import recordRoutes from './recordRoutes.js';
+
 import adminRoutes from './adminRoutes.js';
 const router = express.Router();
 
@@ -16,6 +18,7 @@ router.get('/', (req, res) => {
 // Use route modules
 router.use('/users', userRoutes);
 router.use('/auth', authRoutes);
+router.use('/records', recordRoutes);
 router.use('/admin', adminRoutes);
 
 export default router;
