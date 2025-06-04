@@ -39,6 +39,7 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, {
 app.use('/api', routes);
 app.use('/appointments', appointmentsRouter);
 app.use('/stellar', stellarRoutes); // ✅ Use Stellar routes
+app.use('/api', syncRoutes);
 
 // Error handling
 app.use(errorHandler);

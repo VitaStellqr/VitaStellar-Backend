@@ -11,4 +11,4 @@ router.use(protect);
 // PDF generation route
 router.get('/:id/pdf', hasRole('doctor', 'admin'), pdfController.generatePDF);
 
-export default router; 
+export default router;
