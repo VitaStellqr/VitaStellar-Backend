@@ -24,6 +24,8 @@
   "homepage": "https://github.com/Stellar-Uzima/Uzima-Backend#readme",
   "description": "",
   "dependencies": {
+    "@sentry/node": "^9.25.1",
+    "@sentry/tracing": "^7.120.3",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
