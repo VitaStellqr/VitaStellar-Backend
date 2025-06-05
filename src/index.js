@@ -11,8 +11,9 @@ import errorHandler from './middleware/errorHandler.js';
 import routes from './routes/index.js';
 import appointmentsRouter from './controllers/appointments.controller.js';
 import specs from './config/swagger.js';
-import stellarRoutes from './routes/stellar.js'; // Import Stellar routes
-import './cron/reminderJob.js'; // Cron job
+import { setupGraphQL } from './graphql/index.js';
+import './cron/reminderJob.js';
+import stellarRoutes from './routes/stellar.js';
 import * as Sentry from '@sentry/node';
 import * as Tracing from '@sentry/tracing';
 
@@ -59,7 +60,10 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, {
 // Routes
 app.use('/api', routes);
 app.use('/appointments', appointmentsRouter);
-app.use('/stellar', stellarRoutes); // Use Stellar routes
+app.use('/stellar', stellarRoutes);
+
+// GraphQL Setup
+await setupGraphQL(app); // ✅ Add this line
 app.use('/api', syncRoutes);
 // Sentry debug route - for testing Sentry integration
 app.get('/debug-sentry', (req, res) => {
@@ -74,6 +78,7 @@ app.use(errorHandler);
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
   console.log(`API Documentation available at http://localhost:${port}/docs`);
+  console.log(`GraphQL Playground available at http://localhost:${port}/graphql`);
 });
 
 export default app;
