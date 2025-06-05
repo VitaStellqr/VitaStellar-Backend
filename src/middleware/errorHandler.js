@@ -1,6 +1,9 @@
 const errorHandler = (err, req, res, next) => {
   const statusCode = err.statusCode || 500;
-  const message = err.message || 'Internal Server Error';
+  
+  // Get the error key or use default key
+  const errorKey = err.key || 'errors.SERVER_ERROR';
+  const message = req.t ? req.t(errorKey, { defaultValue: err.message }) : err.message || 'Internal Server Error';
 
   res.status(statusCode).json({
     success: false,

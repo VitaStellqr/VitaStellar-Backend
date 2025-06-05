@@ -10,7 +10,7 @@ const authController = {
     const { error, value } = registerSchema.validate(req.body, { abortEarly: false });
     if (error) {
       const errors = error.details.map(e => e.message).join('; ');
-      return ApiResponse.error(res, errors, 400);
+      return ApiResponse.error(res, 'errors.VALIDATION_ERROR', 400);
     }
 
     const { username, email, password, role } = value;
@@ -23,10 +23,10 @@ const authController = {
 
       if (existingUser) {
         if (existingUser.email === email) {
-          return ApiResponse.error(res, 'Email already in use', 400);
+          return ApiResponse.error(res, 'errors.EMAIL_EXISTS', 400);
         }
         if (existingUser.username === username) {
-          return ApiResponse.error(res, 'Username already in use', 400);
+          return ApiResponse.error(res, 'errors.USERNAME_EXISTS', 400);
         }
       }
 
