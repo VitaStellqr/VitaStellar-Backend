@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import morgan from 'morgan';
 import swaggerUi from 'swagger-ui-express';
+import i18nextMiddleware from 'i18next-http-middleware';
+import i18next from './config/i18n.js';
 
 import connectDB from './config/database.js';
 import errorHandler from './middleware/errorHandler.js';
@@ -34,11 +36,14 @@ Sentry.init({
   tracesSampleRate: 1.0,
 });
 
+// Initialize i18n middleware
+app.use(i18nextMiddleware.handle(i18next));
+
 // Middleware
 app.use(cors());
+app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(morgan('dev'));
 
 // Sentry request & tracing handlers
 app.use(Sentry.Handlers.requestHandler());
