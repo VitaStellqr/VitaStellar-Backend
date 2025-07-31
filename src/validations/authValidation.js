@@ -52,3 +52,45 @@ export const loginSchema = Joi.object({
     'string.empty': 'Password is required',
   }),
 });
+
+// 2FA Validation Schemas
+export const enable2FASchema = Joi.object({
+  phoneNumber: Joi.string().pattern(/^\+[1-9]\d{1,14}$/).required().messages({
+    'string.pattern.base': 'Phone number must be in international format (e.g., +1234567890)',
+    'string.empty': 'Phone number is required',
+  }),
+});
+
+export const verify2FACodeSchema = Joi.object({
+  code: Joi.string().pattern(/^\d{6}$/).required().messages({
+    'string.pattern.base': 'Verification code must be 6 digits',
+    'string.empty': 'Verification code is required',
+  }),
+});
+
+export const loginWith2FASchema = Joi.object({
+  email: Joi.string().email().trim().required(),
+  password: Joi.string().min(8).max(64).required(),
+  twoFactorCode: Joi.string().required().messages({
+    'string.empty': '2FA code is required',
+  }),
+  method: Joi.string().valid('sms', 'totp', 'backup').required().messages({
+    'any.only': '2FA method must be sms, totp, or backup',
+    'string.empty': '2FA method is required',
+  }),
+  deviceId: Joi.string().optional(),
+  rememberDevice: Joi.boolean().default(false),
+});
+
+export const disable2FASchema = Joi.object({
+  password: Joi.string().min(8).max(64).required().messages({
+    'string.empty': 'Password is required to disable 2FA',
+  }),
+  twoFactorCode: Joi.string().required().messages({
+    'string.empty': '2FA code is required to disable 2FA',
+  }),
+  method: Joi.string().valid('totp', 'backup').required().messages({
+    'any.only': '2FA method must be totp or backup',
+    'string.empty': '2FA method is required',
+  }),
+});
