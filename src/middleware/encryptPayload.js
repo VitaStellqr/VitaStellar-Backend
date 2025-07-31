@@ -1,36 +1,36 @@
-const { encrypt } = require('../utils/crypto');
+import { encrypt } from '../utils/crypto.util.js';
 
-module.exports = function encryptPayload(req, res, next) {
+const FIELDS_TO_ENCRYPT = ['diagnosis', 'treatment', 'history'];
+
+function encryptPayload(req, res, next) {
   try {
-    const fieldsToEncrypt = ['diagnosis', 'treatment', 'history'];
-    for (const field of fieldsToEncrypt) {
-      if (req.body[field]) {
-        req.body[field] = encrypt(req.body[field]);
-      }
-    }
-    next();const { encrypt } = require('../utils/crypto.util');
-
-    const FIELDS_TO_ENCRYPT = ['diagnosis', 'treatment', 'history'];
-    
-    function encryptPayload(req, res, next) {
-      try {
-        if (req.body) {
+    if (req.body) {
+      FIELDS_TO_ENCRYPT.forEach((field) => {
+        if (req.body[field] && typeof req.body[field] === 'string') {
+          req.body[field] = encrypt(req.body[field]);
+        }
+      });
+      
+      // Handle bulk operations
+      if (req.body.records && Array.isArray(req.body.records)) {
+        req.body.records.forEach(record => {
           FIELDS_TO_ENCRYPT.forEach((field) => {
-            if (req.body[field]) {
-              req.body[field] = encrypt(req.body[field]);
+            if (record[field] && typeof record[field] === 'string') {
+              record[field] = encrypt(record[field]);
             }
           });
-        }
-        next();
-      } catch (err) {
-        next(err);
+        });
       }
     }
-    
-    module.exports = encryptPayload;
-    
+    next();
   } catch (err) {
-    console.error('Encryption failed:', err);
-    res.status(500).json({ message: 'Encryption error' });
+    console.error('Encryption failed:', err.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Encryption error',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
-};
+}
+
+export default encryptPayload;
