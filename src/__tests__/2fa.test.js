@@ -98,9 +98,11 @@ describe('Two-Factor Authentication', () = {
   });
 
   test('should verify TOTP 2FA code successfully', async () = {
+    //secret
     const secret = twoFactorService.generateTOTPSecret();
     const code = twoFactorService.generateTOTP(secret);
 
+    //function
     await userMock.updateOne({
       'twoFactorAuth.methods.totp.secret': secret,
       'twoFactorAuth.methods.totp.backupCodes': twoFactorService.generateBackupCodes()
@@ -122,6 +124,7 @@ describe('Two-Factor Authentication', () = {
     expect(resVerify.body.message).toBe('TOTP 2FA enabled successfully');
   });
 
+  //test
   test('should login with 2FA successfully', async () = {
     const secret = twoFactorService.generateTOTPSecret();
     const code = twoFactorService.generateTOTP(secret);
