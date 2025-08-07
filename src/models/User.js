@@ -1,6 +1,11 @@
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
+  // User preference for personalized recommendations
+  recommendationsOptOut: {
+    type: Boolean,
+    default: false,
+  },
   username: {
     type: String,
     required: true,
