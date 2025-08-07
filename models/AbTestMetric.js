@@ -1,4 +1,4 @@
-// Stores A/B test group and CTR metrics
+// Stores A/B test groups and CTR metrics
 const mongoose = require('mongoose');
 
 const AbTestMetricSchema = new mongoose.Schema({

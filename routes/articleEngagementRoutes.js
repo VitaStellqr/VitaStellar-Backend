@@ -1,4 +1,4 @@
-// Routes for article engagement metrics
+// Routes for articles engagement metrics
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/articleEngagementController');

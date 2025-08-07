@@ -1,4 +1,4 @@
-// Controller for updating article engagement metrics
+// Controller for updating articles engagement metrics
 const Article = require('../models/Article');
 
 // PATCH /api/articles/:id/engagement

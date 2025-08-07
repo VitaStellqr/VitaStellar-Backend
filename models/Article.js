@@ -1,4 +1,4 @@
-// Article model for health articles with topic tags
+// Articles model for health articles with topic tags
 const mongoose = require('mongoose');
 
 
