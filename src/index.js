@@ -92,12 +92,16 @@ const startServer = async () => {
       `Stellar ${stellarStatus.networkName} reachable - ledger #${stellarStatus.currentLedger} (${stellarStatus.responseTime}ms)`,
     )
 
-    // Start server
-    app.listen(port, () => {
-      console.log(`Server is running on http://localhost:${port}`)
-      console.log(`API Documentation available at http://localhost:${port}/docs`)
-      console.log(`GraphQL Playground available at http://localhost:${port}/graphql`)
-    })
+    // Start HTTP server and WebSocket server
+    const httpServer = require('http').createServer(app);
+    const { initWebSocket } = require('./wsServer.js');
+    initWebSocket(httpServer);
+    httpServer.listen(port, () => {
+      console.log(`Server is running on http://localhost:${port}`);
+      console.log(`API Documentation available at http://localhost:${port}/docs`);
+      console.log(`GraphQL Playground available at http://localhost:${port}/graphql`);
+      console.log(`WebSocket server available at ws://localhost:${port}/ws`);
+    });
   } catch (error) {
     console.error("\x1b[31m%s\x1b[0m", "FATAL: Unable to connect to Stellar network")
     console.error(error.message)
