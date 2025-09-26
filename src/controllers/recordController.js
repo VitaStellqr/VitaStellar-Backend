@@ -1,5 +1,55 @@
+  // Restore soft-deleted record
+  restoreRecord: async (req, res) => {
+    try {
+      const record = await Record.findOne({ _id: req.params.id, deletedAt: { $ne: null } });
+      if (!record) {
+        return ApiResponse.error(res, 'Record not found or not deleted', 404);
+      }
+      record.deletedAt = null;
+      record.deletedBy = null;
+      await record.save();
+      // Audit log
+      const transactionLog = (await import('../models/transactionLog.js')).default;
+      await transactionLog.create({
+        action: 'restore',
+        resource: 'Record',
+        resourceId: record._id,
+        performedBy: req.user?._id || 'admin',
+        timestamp: new Date(),
+        details: 'Record restored by admin.'
+      });
+      return ApiResponse.success(res, null, 'Record restored successfully');
+    } catch (error) {
+      return ApiResponse.error(res, error.message, 500);
+    }
+  },
+
+  // Permanently purge record
+  purgeRecord: async (req, res) => {
+    try {
+      const record = await Record.findOne({ _id: req.params.id, deletedAt: { $ne: null } });
+      if (!record) {
+        return ApiResponse.error(res, 'Record not found or not deleted', 404);
+      }
+      await record.deleteOne();
+      // Audit log
+      const transactionLog = (await import('../models/transactionLog.js')).default;
+      await transactionLog.create({
+        action: 'purge',
+        resource: 'Record',
+        resourceId: record._id,
+        performedBy: req.user?._id || 'admin',
+        timestamp: new Date(),
+        details: 'Record permanently purged by admin.'
+      });
+      return ApiResponse.success(res, null, 'Record permanently purged');
+    } catch (error) {
+      return ApiResponse.error(res, error.message, 500);
+    }
+  },
 import Record from '../models/Record.js';
 import ApiResponse from '../utils/ApiResponse.js';
+import transactionLog from '../models/transactionLog.js';
 
 // IPFS gateway URL for retrieving files
 const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
@@ -149,19 +199,65 @@ const recordController = {
   deleteRecord: async (req, res) => {
     try {
       const { id } = req.params;
-      
-      const record = await Record.findByIdAndDelete(id);
+      const record = await Record.findOne({ _id: id, deletedAt: null });
       if (!record) {
-        return ApiResponse.error(res, 'Record not found', 404);
+        return ApiResponse.error(res, 'Record not found or already deleted', 404);
       }
-      
+      record.deletedAt = new Date();
+      record.deletedBy = req.user && req.user._id ? req.user._id : null;
+      await record.save();
       return ApiResponse.success(
         res,
         null,
-        'Record deleted successfully'
+        'Record soft-deleted successfully'
       );
     } catch (error) {
       console.error('Error deleting record:', error);
+      return ApiResponse.error(res, error.message, 500);
+    }
+  },
+  // Restore soft-deleted record
+  restoreRecord: async (req, res) => {
+    try {
+      const record = await Record.findOne({ _id: req.params.id, deletedAt: { $ne: null } });
+      if (!record) {
+        return ApiResponse.error(res, 'Record not found or not deleted', 404);
+      }
+      record.deletedAt = null;
+      record.deletedBy = null;
+      await record.save();
+      await transactionLog.create({
+        action: 'restore',
+        resource: 'Record',
+        resourceId: record._id,
+        performedBy: req.user?._id || 'admin',
+        timestamp: new Date(),
+        details: 'Record restored by admin.'
+      });
+      return ApiResponse.success(res, null, 'Record restored successfully');
+    } catch (error) {
+      return ApiResponse.error(res, error.message, 500);
+    }
+  },
+
+  // Permanently purge record
+  purgeRecord: async (req, res) => {
+    try {
+      const record = await Record.findOne({ _id: req.params.id, deletedAt: { $ne: null } });
+      if (!record) {
+        return ApiResponse.error(res, 'Record not found or not deleted', 404);
+      }
+      await record.deleteOne();
+      await transactionLog.create({
+        action: 'purge',
+        resource: 'Record',
+        resourceId: record._id,
+        performedBy: req.user?._id || 'admin',
+        timestamp: new Date(),
+        details: 'Record permanently purged by admin.'
+      });
+      return ApiResponse.success(res, null, 'Record permanently purged');
+    } catch (error) {
       return ApiResponse.error(res, error.message, 500);
     }
   },
