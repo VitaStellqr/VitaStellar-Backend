@@ -8,6 +8,8 @@ import i18next from "./config/i18n.js"
 
 import connectDB from "./config/database.js"
 import errorHandler from "./middleware/errorHandler.js"
+import correlationIdMiddleware from "./middleware/correlationId.js"
+import requestLogger from "./middleware/requestLogger.js"
 import routes from "./routes/index.js"
 import appointmentsRouter from "./controllers/appointments.controller.js"
 import specs from "./config/swagger.js"
@@ -42,11 +44,14 @@ Sentry.init({
 // Initialize i18n middleware
 app.use(i18nextMiddleware.handle(i18next))
 
+
 // Middleware
 app.use(cors())
 app.use(morgan("dev"))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+app.use(requestLogger)
+app.use(correlationIdMiddleware)
 
 // Sentry request & tracing handlers
 app.use(Sentry.Handlers.requestHandler())
