@@ -3,6 +3,7 @@
 import Record from '../models/Record.js';
 import { sha256Hash } from '../utils/hashUtil.js';
 import { submitTransaction, fetchMemoFromTransaction } from './stellarService.js';
+import { notifyUser, notifyResource } from '../wsServer.js';
 
 export async function saveAndAnchorRecord(recordData) {
   // Create record without txHash
@@ -26,6 +27,16 @@ export async function saveAndAnchorRecord(recordData) {
   // Update record with txHash
   record.txHash = stellarTxHash;
   await record.save();
+
+  // Real-time payment confirmation notification
+  const safePayload = {
+    _id: record._id,
+    createdBy: record.createdBy,
+    txHash: record.txHash,
+    event: 'paymentConfirmed',
+  };
+  notifyUser(record.createdBy, 'paymentConfirmed', safePayload);
+  notifyResource(record._id, 'paymentConfirmed', safePayload);
 
   return { record, txHash: stellarTxHash };
 }
