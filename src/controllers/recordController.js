@@ -2,6 +2,7 @@
 import Record from '../models/Record.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import transactionLog from '../models/transactionLog.js';
+import { notifyUser, notifyResource } from '../wsServer.js';
 const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
 
 const recordController = {
@@ -75,6 +76,17 @@ const recordController = {
         createdBy: req.user._id,
       });
       await record.save();
+
+      // Real-time notification (no PII unless authorized)
+      const safePayload = {
+        _id: record._id,
+        createdBy: record.createdBy,
+        createdAt: record.createdAt,
+        event: 'recordCreated',
+      };
+      notifyUser(record.createdBy, 'recordCreated', safePayload);
+      notifyResource(record._id, 'recordCreated', safePayload);
+
       return ApiResponse.success(
         res,
         { record },
