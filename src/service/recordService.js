@@ -1,38 +1,35 @@
 /* eslint-disable prettier/prettier */
-// src/services/recordService.js
+// src/service/recordService.js
 import Record from '../models/Record.js';
-import { sha256Hash } from '../utils/hashUtil.js';
-import { submitTransaction, fetchMemoFromTransaction } from './stellarService.js';
+import Outbox from '../models/Outbox.js';
+import { sha256Hash } from '../utils/hashUtils.js';
+import { fetchMemoFromTransaction } from './stellarService.js';
+import { withTransaction } from '../utils/withTransaction.js';
 
+// Create record and enqueue Stellar anchoring via Outbox pattern
 export async function saveAndAnchorRecord(recordData) {
-  // Create record without txHash
-  const record = new Record({ ...recordData, txHash: 'pending' });
-  await record.save();
-
-  // Hash only selected fields (same as Stellar will see)
-  const recordContent = {
-    patientName: record.patientName,
-    date: record.date,
-    diagnosis: record.diagnosis,
-    treatment: record.treatment,
-    createdBy: record.createdBy.toString(),
-  };
-
-  const hash = sha256Hash(recordContent);
-
-  // Submit hash to Stellar
-  const stellarTxHash = await submitTransaction(hash);
-
-  // Update record with txHash
-  record.txHash = stellarTxHash;
-  await record.save();
-
-  return { record, txHash: stellarTxHash };
+  let record;
+  await withTransaction(async (session) => {
+    record = new Record({ ...recordData, txHash: 'pending' });
+    await record.save({ session });
+    // Outbox job - the worker will compute the hash and submit to Stellar
+    await Outbox.create([
+      {
+        type: 'stellar.anchor',
+        payload: { recordId: record._id.toString() },
+        idempotencyKey: record._id.toString(),
+        status: 'pending',
+      }
+    ], { session });
+  });
+  // Return 202-like response shape; tx will be filled asynchronously
+  return { record, txHash: 'pending' };
 }
 
 export async function verifyRecord(recordId) {
   const record = await Record.findById(recordId).lean();
   if (!record) throw new Error('Record not found');
+  if (!record.txHash || record.txHash === 'pending') return false;
 
   const onChainMemo = await fetchMemoFromTransaction(record.txHash);
 

@@ -2,6 +2,7 @@
 import Record from '../models/Record.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import transactionLog from '../models/transactionLog.js';
+import { withTransaction } from '../utils/withTransaction.js';
 const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
 
 const recordController = {
@@ -135,46 +136,57 @@ const recordController = {
   // Restore soft-deleted record
   restoreRecord: async (req, res) => {
     try {
-      const record = await Record.findOne({ _id: req.params.id, deletedAt: { $ne: null } });
-      if (!record) {
-        return ApiResponse.error(res, 'Record not found or not deleted', 404);
-      }
-      record.deletedAt = null;
-      record.deletedBy = null;
-      await record.save();
-      await transactionLog.create({
-        action: 'restore',
-        resource: 'Record',
-        resourceId: record._id,
-        performedBy: req.user?._id || 'admin',
-        timestamp: new Date(),
-        details: 'Record restored by admin.'
+      await withTransaction(async (session) => {
+        const record = await Record.findOne({ _id: req.params.id, deletedAt: { $ne: null } }).session(session);
+        if (!record) {
+          throw new Error('Record not found or not deleted');
+        }
+        record.deletedAt = null;
+        record.deletedBy = null;
+        await record.save({ session });
+        await transactionLog.create([
+          {
+            action: 'restore',
+            resource: 'Record',
+            resourceId: record._id,
+            performedBy: req.user?._id || 'admin',
+            timestamp: new Date(),
+            details: 'Record restored by admin.'
+          }
+        ], { session });
       });
       return ApiResponse.success(res, null, 'Record restored successfully');
     } catch (error) {
-      return ApiResponse.error(res, error.message, 500);
+      const status = error.message.includes('not found') ? 404 : 500;
+      return ApiResponse.error(res, error.message, status);
     }
   },
 
   // Permanently purge record
   purgeRecord: async (req, res) => {
     try {
-      const record = await Record.findOne({ _id: req.params.id, deletedAt: { $ne: null } });
-      if (!record) {
-        return ApiResponse.error(res, 'Record not found or not deleted', 404);
-      }
-      await record.deleteOne();
-      await transactionLog.create({
-        action: 'purge',
-        resource: 'Record',
-        resourceId: record._id,
-        performedBy: req.user?._id || 'admin',
-        timestamp: new Date(),
-        details: 'Record permanently purged by admin.'
+      await withTransaction(async (session) => {
+        const record = await Record.findOne({ _id: req.params.id, deletedAt: { $ne: null } }).session(session);
+        if (!record) {
+          throw new Error('Record not found or not deleted');
+        }
+        const recordId = record._id;
+        await record.deleteOne({ session });
+        await transactionLog.create([
+          {
+            action: 'purge',
+            resource: 'Record',
+            resourceId: recordId,
+            performedBy: req.user?._id || 'admin',
+            timestamp: new Date(),
+            details: 'Record permanently purged by admin.'
+          }
+        ], { session });
       });
       return ApiResponse.success(res, null, 'Record permanently purged');
     } catch (error) {
-      return ApiResponse.error(res, error.message, 500);
+      const status = error.message.includes('not found') ? 404 : 500;
+      return ApiResponse.error(res, error.message, status);
     }
   },
 };
