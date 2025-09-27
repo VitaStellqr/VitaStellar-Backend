@@ -9,6 +9,8 @@ import i18next from "./config/i18n.js"
 import connectDB from "./config/database.js"
 import errorHandler from "./middleware/errorHandler.js"
 import routes from "./routes/index.js"
+import { generalRateLimit } from "./middleware/rateLimiter.js"
+import "./config/redis.js"
 import appointmentsRouter from "./controllers/appointments.controller.js"
 import specs from "./config/swagger.js"
 import { setupGraphQL } from "./graphql/index.js"
@@ -47,6 +49,9 @@ app.use(cors())
 app.use(morgan("dev"))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+
+// Apply general rate limiting to all routes
+app.use(generalRateLimit)
 
 // Sentry request & tracing handlers
 app.use(Sentry.Handlers.requestHandler())
