@@ -1,4 +1,5 @@
 const cron = require('node-cron');
+import { schedulePurgeJob } from './purgeJob.js';
 const { getAppointmentsForTomorrow } = require('../models/appointment.model');
 const { sendMail } = require('../services/email.service');
 const reminderEmail = require('../templates/reminderEmail');
@@ -13,3 +14,6 @@ cron.schedule('0 0 * * *', async () => {
 
   console.log(`[${new Date().toISOString()}] Reminder emails sent.`);
 });
+
+// Schedule purge job
+schedulePurgeJob(cron);
