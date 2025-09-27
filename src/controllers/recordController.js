@@ -1,34 +1,31 @@
+
 import Record from '../models/Record.js';
 import ApiResponse from '../utils/ApiResponse.js';
-
-// IPFS gateway URL for retrieving files
+import transactionLog from '../models/transactionLog.js';
 const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
 
 const recordController = {
-  /**
-   * Get all records
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
+  // Get all records
   getAllRecords: async (req, res) => {
     try {
-      const records = await Record.find().populate('createdBy', 'username email');
-      
-      // Transform records to include file URLs
+      const { includeDeleted, page = 1, limit = 20, patientName, diagnosis } = req.query;
+      const query = includeDeleted === 'true' ? {} : { deletedAt: null };
+      if (patientName) query.patientName = { $regex: patientName, $options: 'i' };
+      if (diagnosis) query.diagnosis = { $regex: diagnosis, $options: 'i' };
+      const records = await Record.find(query)
+        .populate('createdBy', 'username email')
+        .skip((page - 1) * limit)
+        .limit(Number(limit));
       const transformedRecords = records.map(record => {
         const recordObj = record.toObject();
-        
-        // Add IPFS gateway URLs to files
         if (recordObj.files && recordObj.files.length > 0) {
           recordObj.files = recordObj.files.map(file => ({
             ...file,
             url: `${IPFS_GATEWAY}${file.cid}`,
           }));
         }
-        
         return recordObj;
       });
-      
       return ApiResponse.success(
         res,
         { records: transformedRecords },
@@ -39,32 +36,22 @@ const recordController = {
       return ApiResponse.error(res, error.message, 500);
     }
   },
-  
-  /**
-   * Get a record by ID
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
+
+  // Get record by ID
   getRecordById: async (req, res) => {
     try {
       const { id } = req.params;
-      
       const record = await Record.findById(id).populate('createdBy', 'username email');
       if (!record) {
         return ApiResponse.error(res, 'Record not found', 404);
       }
-      
-      // Transform record to include file URLs
       const recordObj = record.toObject();
-      
-      // Add IPFS gateway URLs to files
       if (recordObj.files && recordObj.files.length > 0) {
         recordObj.files = recordObj.files.map(file => ({
           ...file,
           url: `${IPFS_GATEWAY}${file.cid}`,
         }));
       }
-      
       return ApiResponse.success(
         res,
         { record: recordObj },
@@ -75,17 +62,11 @@ const recordController = {
       return ApiResponse.error(res, error.message, 500);
     }
   },
-  
-  /**
-   * Create a new record
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
+
+  // Create a new record
   createRecord: async (req, res) => {
     try {
       const { patientName, diagnosis, treatment, txHash } = req.body;
-      
-      // Create new record
       const record = new Record({
         patientName,
         diagnosis,
@@ -93,43 +74,31 @@ const recordController = {
         txHash,
         createdBy: req.user._id,
       });
-      
       await record.save();
-      
       return ApiResponse.success(
         res,
         { record },
-        'Record created successfully',
-        201
+        'Record created successfully'
       );
     } catch (error) {
       console.error('Error creating record:', error);
       return ApiResponse.error(res, error.message, 500);
     }
   },
-  
-  /**
-   * Update a record
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
+
+  // Update a record
   updateRecord: async (req, res) => {
     try {
       const { id } = req.params;
       const { patientName, diagnosis, treatment } = req.body;
-      
       const record = await Record.findById(id);
       if (!record) {
         return ApiResponse.error(res, 'Record not found', 404);
       }
-      
-      // Update record fields
       if (patientName) record.patientName = patientName;
       if (diagnosis) record.diagnosis = diagnosis;
       if (treatment) record.treatment = treatment;
-      
       await record.save();
-      
       return ApiResponse.success(
         res,
         { record },
@@ -140,28 +109,71 @@ const recordController = {
       return ApiResponse.error(res, error.message, 500);
     }
   },
-  
-  /**
-   * Delete a record
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
+
+  // Soft-delete a record
   deleteRecord: async (req, res) => {
     try {
       const { id } = req.params;
-      
-      const record = await Record.findByIdAndDelete(id);
+      const record = await Record.findOne({ _id: id, deletedAt: null });
       if (!record) {
-        return ApiResponse.error(res, 'Record not found', 404);
+        return ApiResponse.error(res, 'Record not found or already deleted', 404);
       }
-      
+      record.deletedAt = new Date();
+      record.deletedBy = req.user && req.user._id ? req.user._id : null;
+      await record.save();
       return ApiResponse.success(
         res,
         null,
-        'Record deleted successfully'
+        'Record soft-deleted successfully'
       );
     } catch (error) {
       console.error('Error deleting record:', error);
+      return ApiResponse.error(res, error.message, 500);
+    }
+  },
+
+  // Restore soft-deleted record
+  restoreRecord: async (req, res) => {
+    try {
+      const record = await Record.findOne({ _id: req.params.id, deletedAt: { $ne: null } });
+      if (!record) {
+        return ApiResponse.error(res, 'Record not found or not deleted', 404);
+      }
+      record.deletedAt = null;
+      record.deletedBy = null;
+      await record.save();
+      await transactionLog.create({
+        action: 'restore',
+        resource: 'Record',
+        resourceId: record._id,
+        performedBy: req.user?._id || 'admin',
+        timestamp: new Date(),
+        details: 'Record restored by admin.'
+      });
+      return ApiResponse.success(res, null, 'Record restored successfully');
+    } catch (error) {
+      return ApiResponse.error(res, error.message, 500);
+    }
+  },
+
+  // Permanently purge record
+  purgeRecord: async (req, res) => {
+    try {
+      const record = await Record.findOne({ _id: req.params.id, deletedAt: { $ne: null } });
+      if (!record) {
+        return ApiResponse.error(res, 'Record not found or not deleted', 404);
+      }
+      await record.deleteOne();
+      await transactionLog.create({
+        action: 'purge',
+        resource: 'Record',
+        resourceId: record._id,
+        performedBy: req.user?._id || 'admin',
+        timestamp: new Date(),
+        details: 'Record permanently purged by admin.'
+      });
+      return ApiResponse.success(res, null, 'Record permanently purged');
+    } catch (error) {
       return ApiResponse.error(res, error.message, 500);
     }
   },

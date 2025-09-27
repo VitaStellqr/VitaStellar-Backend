@@ -71,6 +71,16 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  deletedAt: {
+    type: Date,
+    default: null,
+    index: true
+  },
+  deletedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
 });
 
 export default mongoose.model('User', userSchema);
