@@ -2,8 +2,9 @@ import express from 'express';
 import userRoutes from './userRoutes.js';
 import authRoutes from './authRoutes.js';
 import recordRoutes from './recordRoutes.js';
-
+import gdprRoutes from './gdprRoutes.js';
 import adminRoutes from './adminRoutes.js';
+import adminGDPRRoutes from './adminGDPRRoutes.js';
 const router = express.Router();
 
 // Import route modules here
@@ -19,6 +20,8 @@ router.get('/', (req, res) => {
 router.use('/users', userRoutes);
 router.use('/auth', authRoutes);
 router.use('/records', recordRoutes);
+router.use('/users', gdprRoutes); // GDPR routes for users
 router.use('/admin', adminRoutes);
+router.use('/admin', adminGDPRRoutes); // GDPR admin routes
 
 export default router;
