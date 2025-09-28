@@ -1,5 +1,5 @@
-const express = require('express');
-const TransactionLog = require('../models/transactionLog');
+import express from 'express';
+import TransactionLog from '../models/transactionLog.js';
 const router = express.Router();
 
 router.get('/logs', async (req, res) => {
@@ -18,4 +18,4 @@ router.get('/logs', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

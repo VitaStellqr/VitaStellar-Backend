@@ -3,8 +3,9 @@ import pdfController from '../controllers/pdfController.js';
 import fileController from '../controllers/fileController.js';
 import recordController from '../controllers/recordController.js';
 import protect from '../middleware/authMiddleware.js';
-import hasRole from '../middleware/hasRoles.js';
+import hasRole from '../middleware/requireRole.js';
 import handleUpload from '../middleware/uploadMiddleware.js';
+import { uploadRateLimit } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
@@ -223,7 +224,7 @@ router.delete('/:id', hasRole('admin'), recordController.deleteRecord);
  *       404:
  *         description: Record not found
  */
-router.post('/:id/files', hasRole('doctor', 'admin'), handleUpload, fileController.uploadFile);
+router.post('/:id/files', hasRole('doctor', 'admin'), uploadRateLimit, handleUpload, fileController.uploadFile);
 
 /**
  * @swagger

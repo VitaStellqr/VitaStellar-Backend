@@ -1,18 +1,26 @@
-const express = require('express');
-const router = express.Router();
-const { addAppointment } = require('../models/appointment.model');
-const { sendMail } = require('../services/email.service');
-const confirmationEmail = require('../templates/confirmationEmail');
+import express from 'express';
+import { addAppointment } from '../model/appointmentModel.js';
+import mailer from '../service/email.Service.js';
+import confirmationEmail from '../templates/confimationEmail.js';
 
+const router = express.Router();
 router.post('/', async (req, res) => {
   const { patient, doctor, date } = req.body;
 
   const newAppointment = addAppointment({ patient, doctor, date });
 
-  await sendMail(patient.email, 'Appointment Confirmation', confirmationEmail(patient.name, date));
-  await sendMail(doctor.email, 'Appointment Confirmation', confirmationEmail(doctor.name, date));
+  await mailer.sendMail(
+    patient.email,
+    'Appointment Confirmation',
+    confirmationEmail(patient.name, date)
+  );
+  await mailer.sendMail(
+    doctor.email,
+    'Appointment Confirmation',
+    confirmationEmail(doctor.name, date)
+  );
 
   res.status(201).json({ message: 'Appointment created and confirmation emails sent.' });
 });
 
-module.exports = router;
+export default router;

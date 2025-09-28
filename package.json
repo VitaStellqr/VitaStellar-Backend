@@ -26,13 +26,15 @@
   "homepage": "https://github.com/Stellar-Uzima/Uzima-Backend#readme",
   "description": "",
   "dependencies": {
-    "apollo-server-express": "^3.13.0",
     "@sentry/node": "^9.25.1",
     "@sentry/tracing": "^7.120.3",
+    "apollo-server-express": "^3.13.0",
     "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
     "graphql": "^16.11.0",
     "i18next": "^25.2.1",
     "i18next-fs-backend": "^2.6.0",
@@ -40,12 +42,14 @@
     "ipfs-http-client": "^60.0.1",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.13.2",
+    "mongoose": "^8.18.2",
     "morgan": "^1.10.0",
     "multer": "^2.0.0",
     "node-cron": "^4.0.7",
     "nodemailer": "^7.0.3",
     "pdfkit": "^0.17.1",
+    "rate-limit-redis": "^4.2.2",
+    "redis": "^5.8.2",
     "stellar-sdk": "^13.3.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
@@ -67,10 +71,17 @@
   },
   "jest": {
     "transform": {
-      "^.+\\.js$": ["babel-jest", { "configFile": "./babel.config.json" }]
+      "^.+\\.js$": [
+        "babel-jest",
+        {
+          "configFile": "./babel.config.json"
+        }
+      ]
     },
     "testEnvironment": "node",
-    "setupFilesAfterEnv": ["./src/__tests__/setup.js"],
+    "setupFilesAfterEnv": [
+      "./src/__tests__/setup.js"
+    ],
     "transformIgnorePatterns": [
       "node_modules/(?!(i18next|i18next-http-middleware|i18next-fs-backend)/)"
     ]

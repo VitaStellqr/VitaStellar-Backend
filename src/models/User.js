@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
@@ -39,26 +40,30 @@ const userSchema = new mongoose.Schema({
         enabled: { type: Boolean, default: false },
         secret: { type: String }, // Encrypted TOTP secret
         verified: { type: Boolean, default: false },
-        backupCodes: [{ 
-          code: String,
-          used: { type: Boolean, default: false },
-          usedAt: Date,
-        }],
+        backupCodes: [
+          {
+            code: String,
+            used: { type: Boolean, default: false },
+            usedAt: Date,
+          },
+        ],
       },
     },
     // Remember device tokens
-    trustedDevices: [{
-      deviceId: String,
-      deviceInfo: String,
-      ipAddress: String,
-      userAgent: String,
-      createdAt: { type: Date, default: Date.now },
-      expiresAt: { 
-        type: Date, 
-        default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+    trustedDevices: [
+      {
+        deviceId: String,
+        deviceInfo: String,
+        ipAddress: String,
+        userAgent: String,
+        createdAt: { type: Date, default: Date.now },
+        expiresAt: {
+          type: Date,
+          default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        },
+        revoked: { type: Boolean, default: false },
       },
-      revoked: { type: Boolean, default: false },
-    }],
+    ],
   },
   // Security settings
   security: {
@@ -70,6 +75,16 @@ const userSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  deletedAt: {
+    type: Date,
+    default: null,
+    index: true
+  },
+  deletedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   },
 });
 

@@ -55,17 +55,23 @@ export const loginSchema = Joi.object({
 
 // 2FA Validation Schemas
 export const enable2FASchema = Joi.object({
-  phoneNumber: Joi.string().pattern(/^\+[1-9]\d{1,14}$/).required().messages({
-    'string.pattern.base': 'Phone number must be in international format (e.g., +1234567890)',
-    'string.empty': 'Phone number is required',
-  }),
+  phoneNumber: Joi.string()
+    .pattern(/^\+[1-9]\d{1,14}$/)
+    .required()
+    .messages({
+      'string.pattern.base': 'Phone number must be in international format (e.g., +1234567890)',
+      'string.empty': 'Phone number is required',
+    }),
 });
 
 export const verify2FACodeSchema = Joi.object({
-  code: Joi.string().pattern(/^\d{6}$/).required().messages({
-    'string.pattern.base': 'Verification code must be 6 digits',
-    'string.empty': 'Verification code is required',
-  }),
+  code: Joi.string()
+    .pattern(/^\d{6}$/)
+    .required()
+    .messages({
+      'string.pattern.base': 'Verification code must be 6 digits',
+      'string.empty': 'Verification code is required',
+    }),
 });
 
 export const loginWith2FASchema = Joi.object({

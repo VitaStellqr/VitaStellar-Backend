@@ -1,10 +1,11 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable no-undef */
-const express = require('express');
+import express from 'express';
+import { createRecord, verifyRecordController } from '../controllers/recordsController.js';
+
 const router = express.Router();
-const { createRecord, verifyRecordController } = require('../controllers/recordsController');
 
 router.post('/', createRecord);
 router.get('/:id/verify', verifyRecordController);
 
-module.exports = router;
+export default router;
