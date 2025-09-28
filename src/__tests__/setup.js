@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import i18next from 'i18next';
 import i18nextMiddleware from 'i18next-http-middleware';
@@ -8,12 +8,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-let mongoServer;
+let replset;
 
 beforeAll(async () => {
-  // Setup MongoDB
-  mongoServer = await MongoMemoryServer.create();
-  const mongoUri = mongoServer.getUri();
+  // Setup MongoDB as a replica set to support transactions
+  replset = await MongoMemoryReplSet.create({ replSet: { count: 1, storageEngine: 'wiredTiger' } });
+  const mongoUri = replset.getUri();
   await mongoose.connect(mongoUri);
 
   // Setup i18next
@@ -39,7 +39,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await mongoose.disconnect();
-  await mongoServer.stop();
+  await replset.stop();
 });
 
 afterEach(async () => {

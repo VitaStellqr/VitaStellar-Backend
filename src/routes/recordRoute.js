@@ -1,7 +1,7 @@
-const express = require('express');
-const encryptPayload = require('./middleware/encryptPayload');
-const decryptPayload = require('./middleware/decryptPayload');
-const Record = require('./models/Record');
+import express from 'express';
+import encryptPayload from './middleware/encryptPayload';
+import decryptPayload from './middleware/decryptPayload';
+import Record from './models/Record';
 const router = express.Router();
 
 router.post('/records', encryptPayload, async (req, res, next) => {
@@ -35,4 +35,4 @@ router.get('/records/:id', decryptPayload, async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;

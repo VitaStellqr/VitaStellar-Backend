@@ -52,7 +52,7 @@ export async function syncRecords(req, res) {
       });
     }
 
-    // Insert new records in a transaction
+    // Insert new records in a transaction (all-or-nothing)
     const session = await Record.startSession();
     let syncedIds = [];
 
@@ -60,17 +60,13 @@ export async function syncRecords(req, res) {
       await session.withTransaction(async () => {
         const insertedRecords = await Record.insertMany(newRecords, { 
           session,
-          ordered: false // Continue on error
+          ordered: true // enforce atomicity
         });
         syncedIds = insertedRecords.map(record => record._id);
       });
     } catch (error) {
-      // Handle duplicate key errors
-      if (error.code === 11000) {
-        console.warn('Duplicate records detected during sync:', error);
-      } else {
-        throw error;
-      }
+      // Any error aborts the transaction; report failure
+      throw error;
     } finally {
       await session.endSession();
     }

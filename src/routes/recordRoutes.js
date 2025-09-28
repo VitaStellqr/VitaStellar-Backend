@@ -3,7 +3,7 @@ import pdfController from '../controllers/pdfController.js';
 import fileController from '../controllers/fileController.js';
 import recordController from '../controllers/recordController.js';
 import protect from '../middleware/authMiddleware.js';
-import hasRole from '../middleware/hasRoles.js';
+import hasRole from '../middleware/requireRole.js';
 import handleUpload from '../middleware/uploadMiddleware.js';
 import { uploadRateLimit } from '../middleware/rateLimiter.js';
 

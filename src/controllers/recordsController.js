@@ -1,9 +1,9 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable no-console */
 /* eslint-disable no-undef */
-const { saveAndAnchorRecord, verifyRecord } = require('../services/recordService');
+import { saveAndAnchorRecord, verifyRecord } from '../service/recordService.js';
 
-async function createRecord(req, res) {
+export async function createRecord(req, res) {
   try {
     const { record, txHash } = await saveAndAnchorRecord(req.body);
     res.status(201).json({ id: record._id, stellarTxHash: txHash });
@@ -13,7 +13,7 @@ async function createRecord(req, res) {
   }
 }
 
-async function verifyRecordController(req, res) {
+export async function verifyRecordController(req, res) {
   try {
     const valid = await verifyRecord(req.params.id);
     res.json({ valid });
@@ -23,7 +23,3 @@ async function verifyRecordController(req, res) {
   }
 }
 
-module.exports = {
-  createRecord,
-  verifyRecordController,
-};

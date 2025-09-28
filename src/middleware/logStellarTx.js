@@ -1,4 +1,4 @@
-const TransactionLog = require('../models/transactionLog');
+import TransactionLog from '../models/transactionLog.js';
 
 const logStellarTx = async (req, res, next) => {
   const originalSend = res.send;
@@ -35,4 +35,4 @@ const logStellarTx = async (req, res, next) => {
   next();
 };
 
-module.exports = logStellarTx;
+export default logStellarTx;

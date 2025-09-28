@@ -13,17 +13,20 @@ import errorHandler from './middleware/errorHandler.js';
 import routes from './routes/index.js';
 import appointmentsRouter from './controllers/appointments.controller.js';
 import specs from './config/swagger.js';
-import { setupGraphQL } from './graphql/index.js';
+import { setupGraphQL } from './graph/index.js';
 import './cron/reminderJob.js';
-import stellarRoutes from './routes/stellar.js';
+import stellarRoutes from './routes/stellarRoutes.js';
 import * as Sentry from '@sentry/node';
 import * as Tracing from '@sentry/tracing';
+import { getNetworkStatus } from './service/stellarService.js';
+import './cron/outboxJob.js';
 import { createRequire } from 'module';
 
 
 // Create require function for ES modules
 const require = createRequire(import.meta.url);
 const stellarService = require('./service/stellarService.js');
+
 
 // Load environment variables
 dotenv.config();
@@ -39,7 +42,7 @@ connectDB();
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   integrations: [
-    new Sentry.Integrations.Http({ tracing: true }),
+    // new Sentry.Integrations.Http({ tracing: true }),
     new Tracing.Integrations.Express({ app }),
   ],
   tracesSampleRate: 1.0,
@@ -58,8 +61,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(generalRateLimit)
 
 // Sentry request & tracing handlers
-app.use(Sentry.Handlers.requestHandler());
-app.use(Sentry.Handlers.tracingHandler());
+// app.use(Sentry.Handlers);
+// app.use(Sentry.Handlers);
 
 // Swagger Documentation
 app.use(
@@ -80,26 +83,33 @@ app.use('/stellar', stellarRoutes);
 // GraphQL Setup
 await setupGraphQL(app);
 
+// Load reminder cron job if available (guard missing dependencies)
+try {
+  await import('./cron/reminderJob.js');
+} catch (e) {
+  console.warn('Reminder job not loaded:', e.message);
+}
+
 // Sentry debug route - for testing Sentry integration
 app.get('/debug-sentry', (req, res) => {
   throw new Error('Sentry test error');
 });
 
 // Error handling
-app.use(Sentry.Handlers.errorHandler());
+// app.use(Sentry.Handlers.errorHandler());
 app.use(errorHandler);
 
 // Check Stellar network status before starting the server
 const startServer = async () => {
   try {
     console.log('Checking Stellar network connectivity...');
-    const startTime = Date.now();
-    const stellarStatus = await stellarService.getNetworkStatus();
-    const checkDuration = Date.now() - startTime;
+    // const startTime = Date.now();
+    // const stellarStatus = await getNetworkStatus();
+    // const checkDuration = Date.now() - startTime;
 
-    console.log(
-      `Stellar ${stellarStatus.networkName} reachable - ledger #${stellarStatus.currentLedger} (${stellarStatus.responseTime}ms)`
-    );
+    // console.log(
+    //   `Stellar ${stellarStatus.networkName} reachable - ledger #${stellarStatus.currentLedger} (${stellarStatus.responseTime}ms)`
+    // );
 
     // Start server
     app.listen(port, () => {

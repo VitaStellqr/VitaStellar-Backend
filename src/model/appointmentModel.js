@@ -16,8 +16,4 @@ function getAppointmentsForTomorrow() {
   return appointments.filter(appt => appt.date.startsWith(targetDate));
 }
 
-module.exports = {
-  addAppointment,
-  getAppointments,
-  getAppointmentsForTomorrow,
-};
+export { addAppointment, getAppointments, getAppointmentsForTomorrow };
