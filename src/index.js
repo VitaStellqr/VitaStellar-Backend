@@ -1,4 +1,5 @@
-/* eslint-disable prettier/prettier */
+import { generalRateLimit } from "./middleware/rateLimiter.js"
+import "./config/redis.js"
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -19,6 +20,13 @@ import * as Sentry from '@sentry/node';
 import * as Tracing from '@sentry/tracing';
 import { getNetworkStatus } from './service/stellarService.js';
 import './cron/outboxJob.js';
+import { createRequire } from 'module';
+
+
+// Create require function for ES modules
+const require = createRequire(import.meta.url);
+const stellarService = require('./service/stellarService.js');
+
 
 // Load environment variables
 dotenv.config();
@@ -48,6 +56,9 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Apply general rate limiting to all routes
+app.use(generalRateLimit)
 
 // Sentry request & tracing handlers
 // app.use(Sentry.Handlers);
