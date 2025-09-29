@@ -1,6 +1,5 @@
-
 import User from '../models/User.js';
-import ApiResponse from '../utils/ApiResponse.js';
+import ApiResponse from '../utils/apiResponse.js';
 import transactionLog from '../models/transactionLog.js';
 import { withTransaction } from '../utils/withTransaction.js';
 
@@ -51,24 +50,29 @@ const userController = {
   // Restore soft-deleted user
   restoreUser: async (req, res) => {
     try {
-      await withTransaction(async (session) => {
-        const user = await User.findOne({ _id: req.params.id, deletedAt: { $ne: null } }).session(session);
+      await withTransaction(async session => {
+        const user = await User.findOne({ _id: req.params.id, deletedAt: { $ne: null } }).session(
+          session
+        );
         if (!user) {
           throw new Error('User not found or not deleted');
         }
         user.deletedAt = null;
         user.deletedBy = null;
         await user.save({ session });
-        await transactionLog.create([
-          {
-            action: 'restore',
-            resource: 'User',
-            resourceId: user._id,
-            performedBy: req.user?._id || 'admin',
-            timestamp: new Date(),
-            details: 'User restored by admin.'
-          }
-        ], { session });
+        await transactionLog.create(
+          [
+            {
+              action: 'restore',
+              resource: 'User',
+              resourceId: user._id,
+              performedBy: req.user?._id || 'admin',
+              timestamp: new Date(),
+              details: 'User restored by admin.',
+            },
+          ],
+          { session }
+        );
       });
       return ApiResponse.success(res, null, 'User restored successfully');
     } catch (error) {
@@ -80,23 +84,28 @@ const userController = {
   // Permanently purge user
   purgeUser: async (req, res) => {
     try {
-      await withTransaction(async (session) => {
-        const user = await User.findOne({ _id: req.params.id, deletedAt: { $ne: null } }).session(session);
+      await withTransaction(async session => {
+        const user = await User.findOne({ _id: req.params.id, deletedAt: { $ne: null } }).session(
+          session
+        );
         if (!user) {
           throw new Error('User not found or not deleted');
         }
         const userId = user._id;
         await user.deleteOne({ session });
-        await transactionLog.create([
-          {
-            action: 'purge',
-            resource: 'User',
-            resourceId: userId,
-            performedBy: req.user?._id || 'admin',
-            timestamp: new Date(),
-            details: 'User permanently purged by admin.'
-          }
-        ], { session });
+        await transactionLog.create(
+          [
+            {
+              action: 'purge',
+              resource: 'User',
+              resourceId: userId,
+              performedBy: req.user?._id || 'admin',
+              timestamp: new Date(),
+              details: 'User permanently purged by admin.',
+            },
+          ],
+          { session }
+        );
       });
       return ApiResponse.success(res, null, 'User permanently purged');
     } catch (error) {

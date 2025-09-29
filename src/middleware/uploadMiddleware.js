@@ -1,5 +1,5 @@
 import multer from 'multer';
-import ApiResponse from '../utils/ApiResponse.js';
+import ApiResponse from '../utils/apiResponse.js';
 
 // Configure multer storage to use memory storage
 const storage = multer.memoryStorage();
@@ -7,7 +7,11 @@ const storage = multer.memoryStorage();
 // File filter to allow only JPEG and PNG files
 const fileFilter = (req, file, cb) => {
   // Accept only jpeg, jpg, and png files
-  if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg' || file.mimetype === 'image/png') {
+  if (
+    file.mimetype === 'image/jpeg' ||
+    file.mimetype === 'image/jpg' ||
+    file.mimetype === 'image/png'
+  ) {
     cb(null, true);
   } else {
     cb(new Error('Only JPEG and PNG files are allowed'), false);
@@ -26,8 +30,8 @@ const upload = multer({
 // Middleware to handle file upload errors
 const handleUpload = (req, res, next) => {
   const uploadSingle = upload.single('file');
-  
-  uploadSingle(req, res, (err) => {
+
+  uploadSingle(req, res, err => {
     if (err instanceof multer.MulterError) {
       // A Multer error occurred when uploading
       if (err.code === 'LIMIT_FILE_SIZE') {
@@ -38,7 +42,7 @@ const handleUpload = (req, res, next) => {
       // An unknown error occurred
       return ApiResponse.error(res, err.message, 400);
     }
-    
+
     // Everything went fine
     next();
   });
