@@ -1,3 +1,25 @@
+
+import express from "express"
+import dotenv from "dotenv"
+import cors from "cors"
+import morgan from "morgan"
+import swaggerUi from "swagger-ui-express"
+import i18nextMiddleware from "i18next-http-middleware"
+import i18next from "./config/i18n.js"
+
+import connectDB from "./config/database.js"
+import errorHandler from "./middleware/errorHandler.js"
+import correlationIdMiddleware from "./middleware/correlationId.js"
+import requestLogger from "./middleware/requestLogger.js"
+import routes from "./routes/index.js"
+import appointmentsRouter from "./controllers/appointments.controller.js"
+import specs from "./config/swagger.js"
+import { setupGraphQL } from "./graphql/index.js"
+import "./cron/reminderJob.js"
+import stellarRoutes from "./routes/stellar.js"
+import * as Sentry from "@sentry/node"
+import * as Tracing from "@sentry/tracing"
+import { createRequire } from "module"
 import { generalRateLimit } from "./middleware/rateLimiter.js"
 import "./config/redis.js"
 import express from 'express';
@@ -22,6 +44,7 @@ import { getNetworkStatus } from './service/stellarService.js';
 import './cron/outboxJob.js';
 import { schedulePermanentDeletionJob } from './jobs/gdprJobs.js';
 import { createRequire } from 'module';
+
 
 
 // Create require function for ES modules
@@ -52,7 +75,16 @@ Sentry.init({
 // Initialize i18n middleware
 app.use(i18nextMiddleware.handle(i18next));
 
+
 // Middleware
+
+app.use(cors())
+app.use(morgan("dev"))
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+app.use(requestLogger)
+app.use(correlationIdMiddleware)
+
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
@@ -60,6 +92,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Apply general rate limiting to all routes
 app.use(generalRateLimit)
+
 
 // Sentry request & tracing handlers
 // app.use(Sentry.Handlers);
