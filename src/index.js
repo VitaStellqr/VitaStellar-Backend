@@ -20,6 +20,7 @@ import * as Sentry from '@sentry/node';
 import * as Tracing from '@sentry/tracing';
 import { getNetworkStatus } from './service/stellarService.js';
 import './cron/outboxJob.js';
+import { schedulePermanentDeletionJob } from './jobs/gdprJobs.js';
 import { createRequire } from 'module';
 
 
@@ -88,6 +89,14 @@ try {
   await import('./cron/reminderJob.js');
 } catch (e) {
   console.warn('Reminder job not loaded:', e.message);
+}
+
+// Initialize GDPR background jobs
+try {
+  schedulePermanentDeletionJob();
+  console.log('GDPR background jobs initialized');
+} catch (e) {
+  console.warn('GDPR jobs not loaded:', e.message);
 }
 
 // Sentry debug route - for testing Sentry integration
