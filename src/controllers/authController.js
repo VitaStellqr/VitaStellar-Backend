@@ -1,7 +1,8 @@
 import bcrypt from 'bcrypt';
 import User from '../models/User.js';
 import ApiResponse from '../utils/apiResponse.js';
-import generateToken from '../utils/generateToken.js';
+import generateAccessToken, { generateRefreshTokenPayload } from '../utils/generateToken.js';
+import RefreshToken from '../models/RefreshToken.js';
 import {
   registerSchema,
   loginSchema,
@@ -62,15 +63,90 @@ const authController = {
         role: userRole,
       };
 
-      // Generate JWT token
-      const token = generateToken(user);
+      // Generate tokens
+      const accessToken = generateAccessToken(user);
+      const { payload: rtPayload, expiresAt } = generateRefreshTokenPayload(user);
+      const rawRefreshToken = crypto.randomBytes(48).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(rawRefreshToken).digest('hex');
 
-      return ApiResponse.success(
-        res,
-        { user: resUser, token },
-        'User registered successfully',
-        201
-      );
+      await RefreshToken.create({
+        userId: user._id,
+        tokenHash,
+        expiresAt,
+        createdByIp: req.ip,
+        userAgent: req.get('User-Agent') || null,
+      });
+
+      return ApiResponse.success(res, { user: resUser, accessToken, refreshToken: rawRefreshToken }, 'User registered successfully', 201);
+    } catch (error) {
+      return ApiResponse.error(res, error.message, 500);
+    }
+  },
+
+  logout: async (req, res) => {
+    try {
+      const { refreshToken } = req.body;
+      if (!refreshToken) {
+        return ApiResponse.error(res, 'Refresh token required', 400);
+      }
+
+      const presentedHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+      const existing = await RefreshToken.findOne({ tokenHash: presentedHash });
+
+      if (existing) {
+        existing.revokedAt = new Date();
+        existing.revokedByIp = req.ip;
+        await existing.save();
+      }
+
+      return ApiResponse.success(res, { revoked: true }, 'Logged out');
+    } catch (error) {
+      return ApiResponse.error(res, error.message, 500);
+    }
+  },
+
+  refresh: async (req, res) => {
+    try {
+      const { refreshToken } = req.body;
+      if (!refreshToken) {
+        return ApiResponse.error(res, 'Refresh token required', 400);
+      }
+
+      const presentedHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+      const existing = await RefreshToken.findOne({ tokenHash: presentedHash });
+      if (!existing) {
+        return ApiResponse.error(res, 'Invalid refresh token', 401);
+      }
+
+      if (existing.revokedAt || existing.expiresAt <= new Date()) {
+        return ApiResponse.error(res, 'Refresh token expired or revoked', 401);
+      }
+
+      const user = await User.findById(existing.userId);
+      if (!user) {
+        return ApiResponse.error(res, 'User not found', 404);
+      }
+
+      // Rotate token: revoke old and issue new
+      const newRawRefresh = crypto.randomBytes(48).toString('hex');
+      const newHash = crypto.createHash('sha256').update(newRawRefresh).digest('hex');
+      const { expiresAt } = generateRefreshTokenPayload(user);
+
+      existing.revokedAt = new Date();
+      existing.revokedByIp = req.ip;
+      existing.replacedByTokenHash = newHash;
+      await existing.save();
+
+      await RefreshToken.create({
+        userId: user._id,
+        tokenHash: newHash,
+        expiresAt,
+        createdByIp: req.ip,
+        userAgent: req.get('User-Agent') || null,
+      });
+
+      const accessToken = generateAccessToken(user);
+      return ApiResponse.success(res, { accessToken, refreshToken: newRawRefresh }, 'Token refreshed');
     } catch (error) {
       return ApiResponse.error(res, error.message, 500);
     }
@@ -108,10 +184,21 @@ const authController = {
         role,
       };
 
-      // Generate JWT token
-      const token = generateToken(user);
+      // Generate tokens
+      const accessToken = generateAccessToken(user);
+      const { payload: rtPayload, expiresAt } = generateRefreshTokenPayload(user);
+      const rawRefreshToken = crypto.randomBytes(48).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(rawRefreshToken).digest('hex');
 
-      return ApiResponse.success(res, { user: resUser, token }, 'Login successful');
+      await RefreshToken.create({
+        userId: user._id,
+        tokenHash,
+        expiresAt,
+        createdByIp: req.ip,
+        userAgent: req.get('User-Agent') || null,
+      });
+
+      return ApiResponse.success(res, { user: resUser, accessToken, refreshToken: rawRefreshToken }, 'Login successful');
     } catch (error) {
       return ApiResponse.error(res, error.message, 500);
     }
@@ -286,7 +373,18 @@ const authController = {
 
       // Check if device is trusted
       if (deviceId && (await TwoFactorService.isDeviceTrusted(user._id, deviceId))) {
-        const token = generateToken(user);
+        const accessToken = generateAccessToken(user);
+        const { expiresAt } = generateRefreshTokenPayload(user);
+        const rawRefreshToken = crypto.randomBytes(48).toString('hex');
+        const tokenHash = crypto.createHash('sha256').update(rawRefreshToken).digest('hex');
+
+        await RefreshToken.create({
+          userId: user._id,
+          tokenHash,
+          expiresAt,
+          createdByIp: req.ip,
+          userAgent: req.get('User-Agent') || null,
+        });
         return ApiResponse.success(
           res,
           {
@@ -296,7 +394,8 @@ const authController = {
               email: user.email,
               role: user.role,
             },
-            token,
+            accessToken,
+            refreshToken: rawRefreshToken,
           },
           'Login successful (trusted device)'
         );
@@ -332,7 +431,18 @@ const authController = {
       }
 
       // Generate token
-      const token = generateToken(user);
+      const accessToken = generateAccessToken(user);
+      const { expiresAt } = generateRefreshTokenPayload(user);
+      const rawRefreshToken = crypto.randomBytes(48).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(rawRefreshToken).digest('hex');
+
+      await RefreshToken.create({
+        userId: user._id,
+        tokenHash,
+        expiresAt,
+        createdByIp: req.ip,
+        userAgent: req.get('User-Agent') || null,
+      });
 
       // Add trusted device if requested
       let newDeviceId = deviceId;
@@ -356,7 +466,8 @@ const authController = {
             email: user.email,
             role: user.role,
           },
-          token,
+          accessToken,
+          refreshToken: rawRefreshToken,
           deviceId: newDeviceId,
         },
         'Login successful'
