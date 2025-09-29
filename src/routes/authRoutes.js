@@ -16,6 +16,10 @@ router.post('/login-2fa', twoFactorRateLimit, authController.loginWith2FA);
 router.post('/forgot-password', passwordResetRateLimit, authController.forgotPassword);
 router.post('/reset-password/:token', passwordResetRateLimit, authController.resetPassword);
 
+// Token refresh & logout (public; use refresh token in body)
+router.post('/refresh', authRateLimit, authController.refresh);
+router.post('/logout', authRateLimit, authController.logout);
+
 // 2FA Management (Protected routes)
 router.use(protect); // Apply authentication middleware to all routes below
 
