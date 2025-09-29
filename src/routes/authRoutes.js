@@ -1,7 +1,11 @@
 import express from 'express';
 import authController from '../controllers/authController.js';
 import protect from '../middleware/authMiddleware.js';
-import { authRateLimit, twoFactorRateLimit, passwordResetRateLimit } from '../middleware/rateLimiter.js';
+import {
+  authRateLimit,
+  twoFactorRateLimit,
+  passwordResetRateLimit,
+} from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
@@ -9,6 +13,8 @@ const router = express.Router();
 router.post('/register', authRateLimit, authController.register);
 router.post('/login', authRateLimit, authController.login);
 router.post('/login-2fa', twoFactorRateLimit, authController.loginWith2FA);
+router.post('/forgot-password', passwordResetRateLimit, authController.forgotPassword);
+router.post('/reset-password/:token', passwordResetRateLimit, authController.resetPassword);
 
 // 2FA Management (Protected routes)
 router.use(protect); // Apply authentication middleware to all routes below

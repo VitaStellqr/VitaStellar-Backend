@@ -1,18 +1,18 @@
 import bcrypt from 'bcrypt';
 import User from '../models/User.js';
-import ApiResponse from '../utils/ApiResponse.js';
+import ApiResponse from '../utils/apiResponse.js';
 import generateToken from '../utils/generateToken.js';
-import { 
-  registerSchema, 
-  loginSchema, 
-  enable2FASchema, 
-  verify2FACodeSchema, 
-  loginWith2FASchema, 
-  disable2FASchema 
+import {
+  registerSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from '../validations/authValidation.js';
 import TwoFactorService from '../services/twoFactorService.js';
 import { sendSMS, validatePhoneNumber, generateVerificationCode } from '../utils/smsUtils.js';
+import mailer from '../service/email.Service.js';
 import crypto from 'crypto';
+import { resetPasswordEmail } from '../templates/resetPasswordEmail.js';
 
 const authController = {
   register: async (req, res) => {
@@ -20,7 +20,7 @@ const authController = {
     const { error, value } = registerSchema.validate(req.body, { abortEarly: false });
     if (error) {
       const errors = error.details.map(e => e.message).join('; ');
-      return ApiResponse.error(res, 'errors.VALIDATION_ERROR', 400);
+      return ApiResponse.error(res, errors, 400);
     }
 
     const { username, email, password, role } = value;
@@ -120,7 +120,7 @@ const authController = {
   // Enable SMS-based 2FA
   enableSMS2FA: async (req, res) => {
     const { phoneNumber } = req.body;
-    
+
     if (!validatePhoneNumber(phoneNumber)) {
       return ApiResponse.error(res, 'Invalid phone number format', 400);
     }
@@ -131,19 +131,20 @@ const authController = {
 
       // Generate verification code
       const verificationCode = generateVerificationCode();
-      
+
       // Temporarily store the verification code (in real app, use Redis or similar)
       user.twoFactorAuth.methods.sms.phoneNumber = phoneNumber;
       user.twoFactorAuth.methods.sms.verificationCode = verificationCode;
       user.twoFactorAuth.methods.sms.verificationExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-      
+
       await user.save();
 
       // Send SMS verification code
       await sendSMS(phoneNumber, `Your Uzima 2FA verification code is: ${verificationCode}`);
 
-      return ApiResponse.success(res, 
-        { message: 'Verification code sent to your phone' }, 
+      return ApiResponse.success(
+        res,
+        { message: 'Verification code sent to your phone' },
         'SMS 2FA setup initiated'
       );
     } catch (error) {
@@ -160,7 +161,7 @@ const authController = {
       if (!user) return ApiResponse.error(res, 'User not found', 404);
 
       const smsConfig = user.twoFactorAuth.methods.sms;
-      
+
       if (!smsConfig.verificationCode || smsConfig.verificationExpiry < new Date()) {
         return ApiResponse.error(res, 'Verification code expired or not found', 400);
       }
@@ -178,7 +179,8 @@ const authController = {
 
       await user.save();
 
-      return ApiResponse.success(res, 
+      return ApiResponse.success(
+        res,
         { twoFactorAuth: { sms: { enabled: true, phoneNumber: smsConfig.phoneNumber } } },
         'SMS 2FA enabled successfully'
       );
@@ -196,24 +198,28 @@ const authController = {
       // Generate TOTP secret
       const secret = TwoFactorService.generateTOTPSecret();
       const qrCodeURI = TwoFactorService.generateQRCodeURI(user.email, secret);
-      
+
       // Generate backup codes
       const backupCodes = TwoFactorService.generateBackupCodes();
-      
+
       // Temporarily store secret (not enabled until verified)
       user.twoFactorAuth.methods.totp.secret = secret;
       user.twoFactorAuth.methods.totp.backupCodes = backupCodes;
-      
+
       await user.save();
-      
+
       // Send setup email
       await TwoFactorService.sendTOTPSetupEmail(user.email, secret);
 
-      return ApiResponse.success(res, {
-        qrCodeURI,
-        secret,
-        backupCodes: backupCodes.map(bc => bc.code)
-      }, 'TOTP 2FA setup initiated');
+      return ApiResponse.success(
+        res,
+        {
+          qrCodeURI,
+          secret,
+          backupCodes: backupCodes.map(bc => bc.code),
+        },
+        'TOTP 2FA setup initiated'
+      );
     } catch (error) {
       return ApiResponse.error(res, error.message, 500);
     }
@@ -228,14 +234,14 @@ const authController = {
       if (!user) return ApiResponse.error(res, 'User not found', 404);
 
       const totpConfig = user.twoFactorAuth.methods.totp;
-      
+
       if (!totpConfig.secret) {
         return ApiResponse.error(res, 'TOTP not configured', 400);
       }
 
       // Verify TOTP code
       const isValid = TwoFactorService.verifyTOTP(totpConfig.secret, code);
-      
+
       if (!isValid) {
         return ApiResponse.error(res, 'Invalid TOTP code', 400);
       }
@@ -247,7 +253,8 @@ const authController = {
 
       await user.save();
 
-      return ApiResponse.success(res, 
+      return ApiResponse.success(
+        res,
         { twoFactorAuth: { totp: { enabled: true } } },
         'TOTP 2FA enabled successfully'
       );
@@ -278,28 +285,35 @@ const authController = {
       }
 
       // Check if device is trusted
-      if (deviceId && await TwoFactorService.isDeviceTrusted(user._id, deviceId)) {
+      if (deviceId && (await TwoFactorService.isDeviceTrusted(user._id, deviceId))) {
         const token = generateToken(user);
-        return ApiResponse.success(res, { 
-          user: {
-            id: user._id,
-            username: user.username,
-            email: user.email,
-            role: user.role
-          }, 
-          token 
-        }, 'Login successful (trusted device)');
+        return ApiResponse.success(
+          res,
+          {
+            user: {
+              id: user._id,
+              username: user.username,
+              email: user.email,
+              role: user.role,
+            },
+            token,
+          },
+          'Login successful (trusted device)'
+        );
       }
 
       // Verify 2FA code
       let isValid = false;
-      
+
       if (method === 'sms' && user.twoFactorAuth.methods.sms.enabled) {
         // For SMS, you would typically send a code and verify it
         // This is a simplified version
         isValid = twoFactorCode === '123456'; // Placeholder
       } else if (method === 'totp' && user.twoFactorAuth.methods.totp.enabled) {
-        isValid = TwoFactorService.verifyTOTP(user.twoFactorAuth.methods.totp.secret, twoFactorCode);
+        isValid = TwoFactorService.verifyTOTP(
+          user.twoFactorAuth.methods.totp.secret,
+          twoFactorCode
+        );
       } else if (method === 'backup') {
         // Check backup codes
         const backupCode = user.twoFactorAuth.methods.totp.backupCodes.find(
@@ -319,30 +333,34 @@ const authController = {
 
       // Generate token
       const token = generateToken(user);
-      
+
       // Add trusted device if requested
       let newDeviceId = deviceId;
       if (rememberDevice) {
         const userAgent = req.get('User-Agent') || 'Unknown';
         const ipAddress = req.ip || req.connection.remoteAddress;
         newDeviceId = await TwoFactorService.addTrustedDevice(
-          user._id, 
-          'Web Browser', 
-          ipAddress, 
+          user._id,
+          'Web Browser',
+          ipAddress,
           userAgent
         );
       }
 
-      return ApiResponse.success(res, {
-        user: {
-          id: user._id,
-          username: user.username,
-          email: user.email,
-          role: user.role
+      return ApiResponse.success(
+        res,
+        {
+          user: {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+          },
+          token,
+          deviceId: newDeviceId,
         },
-        token,
-        deviceId: newDeviceId
-      }, 'Login successful');
+        'Login successful'
+      );
     } catch (error) {
       return ApiResponse.error(res, error.message, 500);
     }
@@ -359,14 +377,17 @@ const authController = {
         methods: {
           sms: {
             enabled: user.twoFactorAuth.methods.sms.enabled,
-            phoneNumber: user.twoFactorAuth.methods.sms.phoneNumber ? 
-              user.twoFactorAuth.methods.sms.phoneNumber.replace(/\d(?=\d{4})/g, '*') : null
+            phoneNumber: user.twoFactorAuth.methods.sms.phoneNumber
+              ? user.twoFactorAuth.methods.sms.phoneNumber.replace(/\d(?=\d{4})/g, '*')
+              : null,
           },
           totp: {
-            enabled: user.twoFactorAuth.methods.totp.enabled
-          }
+            enabled: user.twoFactorAuth.methods.totp.enabled,
+          },
         },
-        trustedDevices: user.twoFactorAuth.trustedDevices.filter(d => !d.revoked && d.expiresAt > new Date()).length
+        trustedDevices: user.twoFactorAuth.trustedDevices.filter(
+          d => !d.revoked && d.expiresAt > new Date()
+        ).length,
       };
 
       return ApiResponse.success(res, status, '2FA status retrieved');
@@ -392,7 +413,10 @@ const authController = {
       // Verify 2FA code before disabling
       let isValid = false;
       if (method === 'totp' && user.twoFactorAuth.methods.totp.enabled) {
-        isValid = TwoFactorService.verifyTOTP(user.twoFactorAuth.methods.totp.secret, twoFactorCode);
+        isValid = TwoFactorService.verifyTOTP(
+          user.twoFactorAuth.methods.totp.secret,
+          twoFactorCode
+        );
       } else if (method === 'backup') {
         const backupCode = user.twoFactorAuth.methods.totp.backupCodes.find(
           bc => bc.code === twoFactorCode && !bc.used
@@ -432,7 +456,100 @@ const authController = {
     } catch (error) {
       return ApiResponse.error(res, error.message, 500);
     }
-  }
+  },
+
+  // Forgot password
+  forgotPassword: async (req, res) => {
+    const { error, value } = forgotPasswordSchema.validate(req.body, { abortEarly: false });
+
+    if (error) {
+      const errors = error.details.map(e => e.message).join('; ');
+      return ApiResponse.error(res, errors, 400);
+    }
+
+    try {
+      const user = await User.findOne({ email: value.email });
+
+      // This is to prevent user enumeration
+      if (!user) {
+        return ApiResponse.success(
+          res,
+          'If an account with that email exists, a password reset link has been sent',
+          200
+        );
+      }
+
+      const resetToken = user.createResetPasswordToken();
+
+      await user.save({ validateBeforeSave: false });
+
+      const resetUrl = `${req.protocol}://${req.get('host')}/api/auth/reset-password/${resetToken}`;
+
+      try {
+        await mailer.sendMail(
+          user.email,
+          'Reset Password (valid 15mins)',
+          resetPasswordEmail(resetUrl)
+        );
+
+        return ApiResponse.success(
+          res,
+          'If an account with that email exists, a password reset link has been sent',
+          200
+        );
+      } catch (error) {
+        user.security.passwordResetToken = undefined;
+        user.security.passwordResetTokenExpires = undefined;
+        await user.save({ validateBeforeSave: false });
+
+        return ApiResponse.error(res, 'An error occurred processing your request', 500);
+      }
+    } catch (error) {
+      return ApiResponse.error(res, 'An error occurred processing your request', 500);
+    }
+  },
+
+  // Reset Password
+  resetPassword: async (req, res) => {
+    const { error, value } = resetPasswordSchema.validate(req.body, { abortEarly: false });
+    if (error) {
+      const errors = error.details.map(e => e.message).join('; ');
+      return ApiResponse.error(res, errors, 400);
+    }
+
+    try {
+      const { password } = value;
+
+      const resetPasswordHash = crypto.createHash('sha256').update(req.params.token).digest('hex');
+
+      const user = await User.findOne({
+        'security.passwordResetToken': resetPasswordHash,
+        'security.passwordResetTokenExpires': { $gt: new Date() },
+      });
+
+      if (!user) {
+        return ApiResponse.error(res, 'Token is invalid or has expired', 400);
+      }
+
+      // Check if new password is different from current password
+      const isSamePassword = await bcrypt.compare(password, user.password);
+      if (isSamePassword) {
+        return ApiResponse.error(res, 'New password must be different from current password', 400);
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user.password = hashedPassword;
+      user.security.passwordResetToken = undefined;
+      user.security.passwordResetTokenExpires = undefined;
+      user.security.passwordChangedAt = new Date();
+
+      await user.save();
+
+      return ApiResponse.success(res, 'Password reset successful', 200);
+    } catch (error) {
+      return ApiResponse.error(res, 'An error occurred processing your request', 500);
+    }
+  },
 };
 
 export default authController;

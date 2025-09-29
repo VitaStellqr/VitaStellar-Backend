@@ -1,5 +1,6 @@
 /* eslint-disable prettier/prettier */
 import mongoose from 'mongoose';
+import crypto from 'crypto';
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -71,6 +72,8 @@ const userSchema = new mongoose.Schema({
     lockUntil: Date,
     passwordChangedAt: Date,
     requireTwoFactorForSensitive: { type: Boolean, default: false },
+    passwordResetToken: String,
+    passwordResetTokenExpires: Date,
   },
   createdAt: {
     type: Date,
@@ -79,13 +82,22 @@ const userSchema = new mongoose.Schema({
   deletedAt: {
     type: Date,
     default: null,
-    index: true
+    index: true,
   },
   deletedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    default: null
+    default: null,
   },
 });
+
+userSchema.methods.createResetPasswordToken = function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  this.security.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  this.security.passwordResetTokenExpires = new Date(Date.now() + 15 * 60 * 1000);
+
+  return resetToken;
+};
 
 export default mongoose.model('User', userSchema);
