@@ -12,6 +12,7 @@ import errorHandler from "./middleware/errorHandler.js"
 import correlationIdMiddleware from "./middleware/correlationId.js"
 import requestLogger from "./middleware/requestLogger.js"
 import routes from "./routes/index.js"
+import inventoryRoutes from "./routes/inventoryRoutes.js"
 import appointmentsRouter from "./controllers/appointments.controller.js"
 import specs from "./config/swagger.js"
 import { setupGraphQL } from "./graphql/index.js"
@@ -43,6 +44,7 @@ import * as Tracing from '@sentry/tracing';
 import { getNetworkStatus } from './service/stellarService.js';
 import './cron/outboxJob.js';
 import { schedulePermanentDeletionJob } from './jobs/gdprJobs.js';
+import { initRealtime } from './service/realtime.service.js';
 import { createRequire } from 'module';
 
 
@@ -111,6 +113,7 @@ app.use(
 
 // Routes
 app.use('/api', routes);
+app.use('/api/inventory', inventoryRoutes);
 app.use('/appointments', appointmentsRouter);
 app.use('/stellar', stellarRoutes);
 
@@ -154,11 +157,12 @@ const startServer = async () => {
     // );
 
     // Start server
-    app.listen(port, () => {
+    const server = app.listen(port, () => {
       console.log(`Server is running on http://localhost:${port}`);
       console.log(`API Documentation available at http://localhost:${port}/docs`);
       console.log(`GraphQL Playground available at http://localhost:${port}/graphql`);
     });
+    initRealtime(server);
   } catch (error) {
     console.error('\x1b[31m%s\x1b[0m', 'FATAL: Unable to connect to Stellar network');
     console.error(error.message);
