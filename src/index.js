@@ -44,6 +44,7 @@ import * as Tracing from '@sentry/tracing';
 import { getNetworkStatus } from './service/stellarService.js';
 import './cron/outboxJob.js';
 import { schedulePermanentDeletionJob } from './jobs/gdprJobs.js';
+import { initRealtime } from './service/realtime.service.js';
 import { createRequire } from 'module';
 
 
@@ -156,11 +157,12 @@ const startServer = async () => {
     // );
 
     // Start server
-    app.listen(port, () => {
+    const server = app.listen(port, () => {
       console.log(`Server is running on http://localhost:${port}`);
       console.log(`API Documentation available at http://localhost:${port}/docs`);
       console.log(`GraphQL Playground available at http://localhost:${port}/graphql`);
     });
+    initRealtime(server);
   } catch (error) {
     console.error('\x1b[31m%s\x1b[0m', 'FATAL: Unable to connect to Stellar network');
     console.error(error.message);
