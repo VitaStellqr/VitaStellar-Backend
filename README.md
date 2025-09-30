@@ -8,6 +8,7 @@ This is the backend service for Uzima, built with Express and MongoDB.
 - Cron jobs for scheduled reminders
 - **Sentry integration** for real-time error monitoring and performance tracing
 - **Rate limiting** with Redis to prevent abuse and brute force attacks
+- **Inventory**: real-time stock tracking with FIFO and low-stock alerts
 
 ## Prerequisites
 - Node.js v16 or higher
@@ -53,6 +54,28 @@ Start in production mode:
 npm start
 ```
 The API is now available at `http://localhost:<PORT>` and Swagger UI at `http://localhost:<PORT>/docs`.
+
+### Inventory System
+
+REST endpoints (under `/api/inventory`):
+
+- `POST /` create item `{ sku, name, threshold, lots? }`
+- `GET /` list items
+- `GET /:sku` fetch one item
+- `PATCH /:sku` update name/category/unit/threshold/metadata
+- `POST /:sku/lots` add stock to lot `{ lotNumber, quantity, expiryDate }`
+- `POST /:sku/consume` consume stock FIFO `{ quantity }`
+
+WebSocket events (Socket.IO, connect to the same host):
+
+- `inventory:update` payload `{ type, item, lotsConsumed? }`
+- `inventory:lowStock` payload `{ sku, name, totalQuantity, threshold, lots }`
+
+Behavior:
+
+- FIFO consumption prioritizes earliest `expiryDate` lots
+- Low-stock alerts emit when `totalQuantity <= threshold`
+- All changes are audit-logged in `InventoryAuditLog`
 
 ## Sentry Integration
 Uzima Backend is configured to report runtime errors and performance traces to Sentry.
