@@ -12,6 +12,7 @@ import errorHandler from "./middleware/errorHandler.js"
 import correlationIdMiddleware from "./middleware/correlationId.js"
 import requestLogger from "./middleware/requestLogger.js"
 import routes from "./routes/index.js"
+import inventoryRoutes from "./routes/inventoryRoutes.js"
 import appointmentsRouter from "./controllers/appointments.controller.js"
 import specs from "./config/swagger.js"
 import { setupGraphQL } from "./graphql/index.js"
@@ -111,6 +112,7 @@ app.use(
 
 // Routes
 app.use('/api', routes);
+app.use('/api/inventory', inventoryRoutes);
 app.use('/appointments', appointmentsRouter);
 app.use('/stellar', stellarRoutes);
 
