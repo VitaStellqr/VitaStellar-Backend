@@ -1,6 +1,8 @@
 import express from 'express';
 import InventoryItem from '../models/InventoryItem.js';
 import { logInventoryChange } from '../service/inventoryAudit.service.js';
+import { emitInventoryUpdate } from '../service/realtime.service.js';
+import { checkAndNotifyLowStock } from '../service/inventoryAlert.service.js';
 
 const router = express.Router();
 
@@ -18,6 +20,8 @@ router.post('/', async (req, res) => {
       performedBy: req.user?.id,
     });
     res.status(201).json({ success: true, data: item });
+    emitInventoryUpdate({ type: 'created', item });
+    await checkAndNotifyLowStock(item);
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }
@@ -45,6 +49,8 @@ router.patch('/:sku', async (req, res) => {
   );
   if (!item) return res.status(404).json({ success: false, message: 'Not found' });
   res.json({ success: true, data: item });
+  emitInventoryUpdate({ type: 'updated', item });
+  await checkAndNotifyLowStock(item);
 });
 
 // Add stock to a lot (upsert by lotNumber)
@@ -77,6 +83,8 @@ router.post('/:sku/lots', async (req, res) => {
   });
 
   res.status(201).json({ success: true, data: item });
+  emitInventoryUpdate({ type: 'lot_added', item });
+  await checkAndNotifyLowStock(item);
 });
 
 // Consume stock FIFO respecting expiry dates
@@ -122,6 +130,8 @@ router.post('/:sku/consume', async (req, res) => {
     });
 
     res.json({ success: true, data: { item, lotsConsumed } });
+    emitInventoryUpdate({ type: 'consumed', item, lotsConsumed });
+    await checkAndNotifyLowStock(item);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
