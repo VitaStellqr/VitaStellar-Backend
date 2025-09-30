@@ -18,4 +18,9 @@ export function emitInventoryUpdate(payload) {
   ioInstance.to('inventory').emit('inventory:update', payload);
 }
 
+export function emitLowStockAlert(payload) {
+  if (!ioInstance) return;
+  ioInstance.to('inventory').emit('inventory:lowStock', payload);
+}
+
 
