@@ -43,6 +43,7 @@ import * as Sentry from '@sentry/node';
 import * as Tracing from '@sentry/tracing';
 import { getNetworkStatus } from './service/stellarService.js';
 import './cron/outboxJob.js';
+import './cron/backupJob.js';
 import { schedulePermanentDeletionJob } from './jobs/gdprJobs.js';
 import { initRealtime } from './service/realtime.service.js';
 import { createRequire } from 'module';
