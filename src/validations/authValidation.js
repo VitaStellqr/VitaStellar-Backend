@@ -55,17 +55,23 @@ export const loginSchema = Joi.object({
 
 // 2FA Validation Schemas
 export const enable2FASchema = Joi.object({
-  phoneNumber: Joi.string().pattern(/^\+[1-9]\d{1,14}$/).required().messages({
-    'string.pattern.base': 'Phone number must be in international format (e.g., +1234567890)',
-    'string.empty': 'Phone number is required',
-  }),
+  phoneNumber: Joi.string()
+    .pattern(/^\+[1-9]\d{1,14}$/)
+    .required()
+    .messages({
+      'string.pattern.base': 'Phone number must be in international format (e.g., +1234567890)',
+      'string.empty': 'Phone number is required',
+    }),
 });
 
 export const verify2FACodeSchema = Joi.object({
-  code: Joi.string().pattern(/^\d{6}$/).required().messages({
-    'string.pattern.base': 'Verification code must be 6 digits',
-    'string.empty': 'Verification code is required',
-  }),
+  code: Joi.string()
+    .pattern(/^\d{6}$/)
+    .required()
+    .messages({
+      'string.pattern.base': 'Verification code must be 6 digits',
+      'string.empty': 'Verification code is required',
+    }),
 });
 
 export const loginWith2FASchema = Joi.object({
@@ -93,4 +99,28 @@ export const disable2FASchema = Joi.object({
     'any.only': '2FA method must be totp or backup',
     'string.empty': '2FA method is required',
   }),
+});
+
+// Forgot Password Validation Schema
+export const forgotPasswordSchema = Joi.object({
+  email: Joi.string().email().trim().required().messages({
+    'string.email': 'Invalid email format',
+    'string.empty': 'Email is required',
+  }),
+});
+
+// Reset Password Validation Schema
+export const resetPasswordSchema = Joi.object({
+  password: Joi.string()
+    .min(8)
+    .max(64)
+    .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*])'))
+    .required()
+    .messages({
+      'string.pattern.base':
+        'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+      'string.min': 'Password must be at least 8 characters long',
+      'string.max': 'Password must be at most 64 characters long',
+      'string.empty': 'Password is required',
+    }),
 });

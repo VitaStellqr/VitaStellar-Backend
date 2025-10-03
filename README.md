@@ -7,10 +7,14 @@ This is the backend service for Uzima, built with Express and MongoDB.
 - Swagger UI documentation at `/docs`
 - Cron jobs for scheduled reminders
 - **Sentry integration** for real-time error monitoring and performance tracing
+- **Rate limiting** with Redis to prevent abuse and brute force attacks
+- **Inventory**: real-time stock tracking with FIFO and low-stock alerts
 
 ## Prerequisites
 - Node.js v16 or higher
 - npm v8 or higher
+- MongoDB database
+- Redis server (for rate limiting)
 - A Sentry project and DSN (Data Source Name)
 
 ## Installation
@@ -37,6 +41,7 @@ SMTP_USER=<smtp user>
 SMTP_PASS=<smtp password>
 MAIL_FROM="Telemed Support <support@yourdomain.com>"
 SENTRY_DSN=<your Sentry DSN>
+REDIS_URL=redis://localhost:6379
 ```
 
 ## Running the App
@@ -49,6 +54,28 @@ Start in production mode:
 npm start
 ```
 The API is now available at `http://localhost:<PORT>` and Swagger UI at `http://localhost:<PORT>/docs`.
+
+### Inventory System
+
+REST endpoints (under `/api/inventory`):
+
+- `POST /` create item `{ sku, name, threshold, lots? }`
+- `GET /` list items
+- `GET /:sku` fetch one item
+- `PATCH /:sku` update name/category/unit/threshold/metadata
+- `POST /:sku/lots` add stock to lot `{ lotNumber, quantity, expiryDate }`
+- `POST /:sku/consume` consume stock FIFO `{ quantity }`
+
+WebSocket events (Socket.IO, connect to the same host):
+
+- `inventory:update` payload `{ type, item, lotsConsumed? }`
+- `inventory:lowStock` payload `{ sku, name, totalQuantity, threshold, lots }`
+
+Behavior:
+
+- FIFO consumption prioritizes earliest `expiryDate` lots
+- Low-stock alerts emit when `totalQuantity <= threshold`
+- All changes are audit-logged in `InventoryAuditLog`
 
 ## Sentry Integration
 Uzima Backend is configured to report runtime errors and performance traces to Sentry.
@@ -68,8 +95,30 @@ Sentry captures performance traces for all incoming requests (sampling rate = 10
 1. Call any endpoint (e.g., `/api`).
 2. In Sentry Dashboard, go to **Performance → Transactions** to inspect traces and response times.
 
+## Rate Limiting
+
+The API implements comprehensive rate limiting to prevent abuse and brute force attacks:
+
+- **General API**: 100 requests per 15 minutes
+- **Authentication**: 5 requests per 15 minutes  
+- **2FA Operations**: 10 requests per 15 minutes
+- **File Uploads**: 20 requests per hour
+- **Admin Operations**: 200 requests per 15 minutes
+
+Rate limits are enforced per-IP for anonymous users and per-user for authenticated users. When limits are exceeded, the API returns HTTP 429 with retry information.
+
+For detailed information, see [RATE_LIMITING.md](./RATE_LIMITING.md).
+
+### Testing Rate Limits
+
+```bash
+# Test rate limiting functionality
+node test-rate-limit.js
+```
+
 ## Monitoring and Alerts
 - Configure alerts and dashboards in Sentry for proactive notifications.
+- Monitor rate limit violations in Redis and application logs.
 
 ## License
 ISC

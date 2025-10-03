@@ -1,10 +1,10 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable no-undef */
-// src/utils/hashUtil.js
-const crypto = require('crypto');
+// src/utils/hashUtils.js
+import crypto from 'crypto';
 
-function sha256Hash(data) {
+export function sha256Hash(data) {
   return crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex');
 }
 
-module.exports = { sha256Hash };
+export default sha256Hash;

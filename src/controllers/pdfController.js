@@ -1,23 +1,23 @@
 import PDFDocument from 'pdfkit';
 import Record from '../models/Record.js';
-import ApiResponse from '../utils/ApiResponse.js';
+import ApiResponse from '../utils/apiResponse.js';
 
 const pdfController = {
   generatePDF: async (req, res) => {
     try {
       const record = await Record.findById(req.params.id);
-      
+
       if (!record) {
         return ApiResponse.error(res, 'Record not found', 404);
       }
 
       // Create a new PDF document
       const doc = new PDFDocument();
-      
+
       // Set response headers
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `inline; filename="patient-record-${record._id}.pdf"`);
-      
+
       // Pipe the PDF directly to the response
       doc.pipe(res);
 
@@ -47,15 +47,14 @@ const pdfController = {
       doc.moveDown();
 
       // Add footer
-      doc.fontSize(10)
-        .text(`Generated on: ${new Date().toLocaleString()}`, { align: 'center' });
+      doc.fontSize(10).text(`Generated on: ${new Date().toLocaleString()}`, { align: 'center' });
 
       // Finalize the PDF
       doc.end();
     } catch (error) {
       return ApiResponse.error(res, error.message, 500);
     }
-  }
+  },
 };
 
-export default pdfController; 
+export default pdfController;
