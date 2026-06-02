@@ -159,6 +159,16 @@ backend/
 
 The application will be available at `http://localhost:3000`
 
+## 🔢 API Versioning
+
+This backend uses URI-based API versioning under the `api/v` prefix.
+
+- Default API version: `1`
+- Version 1 endpoints are served under `/api/v1/...`
+- Example: `POST /api/v1/auth/login`
+
+Controllers such as `src/modules/auth/auth.controller.ts` and `src/modules/users/users.controller.ts` are explicitly versioned with `@Controller({ version: '1' })`.
+
 ## 💻 Development
 
 ### Available Scripts

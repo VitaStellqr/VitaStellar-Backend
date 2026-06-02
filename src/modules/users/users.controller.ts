@@ -8,7 +8,7 @@
   Body,
   Req,
   Query,
-   Patch,
+  Patch,
   UseGuards,
   UsePipes,
   ValidationPipe,
@@ -17,6 +17,7 @@
   ForbiddenException,
   NotFoundException,
   BadRequestException,
+  Version,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -50,6 +51,7 @@ type AuthenticatedRequest = {
 @ApiTags('users')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@Version('1')
 @Controller({ path: 'users', version: '1' })
 export class UsersController {
   constructor(
@@ -96,6 +98,8 @@ export class UsersController {
   async deactivate(@Req() req: AuthenticatedRequest): Promise<void> {
     const userId = this.extractUserId(req);
     await this.usersService.deactivateUser(userId);
+  }
+
   @Get('activity-feed')
   @UsePipes(
     new ValidationPipe({
@@ -177,17 +181,5 @@ export class UsersController {
 
   private extractIpAddress(req: AuthenticatedRequest): string | undefined {
     return req.ip || req.headers?.['x-forwarded-for']?.toString()?.split(',')[0]?.trim();
-  }
-
-    @Patch('profile')
-  @UseGuards(JwtAuthGuard)
-  async updateProfile(
-    @Req() req,
-    @Body() dto: UpdateProfileDto,
-  ) {
-    return this.usersService.updateProfile(
-      req.user.id,
-      dto,
-    );
   }
 }

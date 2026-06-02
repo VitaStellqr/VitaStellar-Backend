@@ -10,6 +10,7 @@ import {
   RewardHistoryQueryDto,
   RewardHistoryResponseDto,
   RewardHistoryItemDto,
+  RewardPayoutHistoryQueryDto,
 } from './dto/reward-history.dto';
 import { RewardTransaction } from './entities/reward-transaction.entity';
 import { RewardStatus } from './enums/reward-status.enum';
@@ -81,7 +82,7 @@ export class RewardService {
     userId: string,
     queryDto: RewardHistoryQueryDto,
   ): Promise<RewardHistoryResponseDto> {
-    const { page = 1, limit = 20, startDate, endDate, categoryId } = queryDto;
+    const { page = 1, limit = 20, startDate, endDate, categoryId, status } = queryDto as RewardHistoryQueryDto & { status?: string };
     const skip = (page - 1) * limit;
 
     // Create cache key
@@ -115,6 +116,13 @@ export class RewardService {
     if (endDate) {
       queryBuilder.andWhere('reward_transaction.createdAt <= :endDate', {
         endDate: new Date(endDate),
+      });
+    }
+
+    // Apply status filter
+    if (status) {
+      queryBuilder.andWhere('reward_transaction.status = :status', {
+        status,
       });
     }
 
@@ -163,6 +171,13 @@ export class RewardService {
     await this.cacheManager.set(cacheKey, result, 120000);
 
     return result;
+  }
+
+  async getPayoutHistory(
+    userId: string,
+    queryDto: RewardPayoutHistoryQueryDto,
+  ): Promise<RewardHistoryResponseDto> {
+    return this.getRewardHistory(userId, queryDto);
   }
 
   async processRewardJob(

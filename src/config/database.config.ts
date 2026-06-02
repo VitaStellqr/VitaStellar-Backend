@@ -63,12 +63,12 @@ export function buildDatabaseTypeOrmOptions(
 ): Pick<TypeOrmModuleOptions, 'logging' | 'maxQueryExecutionTime' | 'logger'> {
   const isProduction = env.NODE_ENV === 'production';
   const thresholdMs = getSlowQueryThresholdMs(env);
-  const verboseLogging = env.DB_LOGGING === 'true';
+  const loggingEnabled = !isProduction || env.DB_LOGGING === 'true';
 
   return {
     maxQueryExecutionTime: thresholdMs,
-    logging: isProduction ? false : verboseLogging,
-    logger: new SlowQueryLogger(thresholdMs, isProduction),
+    logging: loggingEnabled,
+    logger: 'advanced-console',
   };
 }
 

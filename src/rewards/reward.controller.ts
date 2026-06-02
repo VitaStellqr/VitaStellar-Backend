@@ -19,7 +19,7 @@ import { RewardService } from './reward.service';
 import {
   RewardHistoryQueryDto,
   RewardHistoryResponseDto,
-  RewardHistoryItemDto,
+  RewardPayoutHistoryQueryDto,
 } from './dto/reward-history.dto';
 
 @ApiTags('rewards')
@@ -70,5 +70,26 @@ export class RewardController {
   ): Promise<RewardHistoryResponseDto> {
     const userId = req.user.id;
     return this.rewardService.getRewardHistory(userId, queryDto);
+  }
+
+  @Get('payouts')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get payout history',
+    description:
+      'Retrieve paginated payout history for the authenticated user with optional filtering by date and status.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Payout history retrieved successfully',
+    type: RewardHistoryResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getPayoutHistory(
+    @Request() req: any,
+    @Query() queryDto: RewardPayoutHistoryQueryDto,
+  ): Promise<RewardHistoryResponseDto> {
+    const userId = req.user.id;
+    return this.rewardService.getPayoutHistory(userId, queryDto);
   }
 }

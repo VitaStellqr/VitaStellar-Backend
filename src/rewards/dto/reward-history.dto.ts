@@ -1,5 +1,6 @@
 import {
   IsDateString,
+  IsEnum,
   IsOptional,
   IsNumber,
   IsString,
@@ -7,6 +8,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { RewardStatus } from '../enums/reward-status.enum';
 
 export class RewardHistoryQueryDto {
   @ApiPropertyOptional({
@@ -56,6 +58,17 @@ export class RewardHistoryQueryDto {
   @IsOptional()
   @IsString()
   categoryId?: string;
+}
+
+export class RewardPayoutHistoryQueryDto extends RewardHistoryQueryDto {
+  @ApiPropertyOptional({
+    description: 'Filter payouts by status',
+    enum: RewardStatus,
+    type: String,
+  })
+  @IsOptional()
+  @IsEnum(RewardStatus)
+  status?: RewardStatus;
 }
 
 export class RewardHistoryItemDto {
