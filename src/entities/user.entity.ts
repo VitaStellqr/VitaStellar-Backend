@@ -99,7 +99,7 @@ export class User {
   @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
 
-  @DeleteDateColumn({ name: 'deleted_at' })
+  @DeleteDateColumn({ type: 'timestamp', nullable: true, name: 'deleted_at' })
   deletedAt?: Date | null;
 
   @Column({ nullable: true, unique: true })
@@ -110,6 +110,9 @@ export class User {
 
   @Column({ type: 'varchar', nullable: true, select: false })
   twoFactorSecret: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  fcmToken?: string | null;
 
   @Column({ type: 'int', default: 0 })
   failedLoginAttempts: number;
