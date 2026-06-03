@@ -370,14 +370,9 @@ docker compose down                   # stop services
 docker compose down -v                # stop and remove volumes
 ```
 
-## 📖 Module Guides
+## 📖 Modules
 
-Detailed documentation for each module is available in their respective README files:
-
-- [Auth Module](./src/modules/auth/README.md) - Authentication and authorization
-- [Users Module](./src/modules/users/README.md) - User management
-- [Health Tasks Module](./src/modules/health-tasks/README.md) - Health task tracking
-- [Database Module](./src/database/README.md) - Database setup and migrations
+Feature modules are organized under `src/modules/`: auth, users, notifications, rewards, leaderboard, coupons, streaks, tasks, referrals, audit, admin, and more.
 
 ## 📦 Dependency updates
 
