@@ -42,15 +42,6 @@ export class UsersService {
     private readonly preferencesService: PreferencesService = null as any,
   ) {}
 
-  async registerDeviceToken(userId: string, token: string): Promise<User> {
-    if (!token) {
-      throw new BadRequestException('Device token is required');
-    }
-    const user = await this.findUserOrFail(userId);
-    user.fcmToken = token;
-    return this.userRepository.save(user);
-  }
-
   // --- SETTINGS METHODS ---
 
   async getSettings(userId: string): Promise<UserSettingsResponseDto> {
@@ -653,22 +644,6 @@ export class UsersService {
     await this.preferencesService.deletePreferences(userId);
   }
 
-  /**
-   * Deactivate a user (self-service deactivation)
-   */
-  async deactivateUser(userId: string): Promise<void> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    user.isActive = false;
-    user.status = UserStatus.INACTIVE;
-    await this.userRepository.softRemove(user);
-
-    if (this.cacheManager) {
-      await this.cacheManager.del(`user:profile:${userId}`);
-    }
   async updateProfile(
     userId: string,
     dto: UpdateProfileDto,

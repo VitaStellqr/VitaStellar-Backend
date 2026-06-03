@@ -8,7 +8,6 @@ import {
   Body,
   Req,
   Query,
-  Patch,
   UseGuards,
   UsePipes,
   ValidationPipe,
@@ -24,6 +23,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
+  ApiParam,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { UsersService } from './users.service';
@@ -31,8 +31,6 @@ import { UserSearchService } from './services/user-search.service';
 import { UserSearchDto } from './dto/user-search.dto';
 import { ActivityFeedQueryDto } from './dto/activity-feed-query.dto';
 import { ActivityFeedService } from './services/activity-feed.service';
-import { QueueService } from '../../shared/queue/queue.service';
-import { DATA_PROCESSING_QUEUE, DATA_EXPORT_JOB } from '../../queue/queue.constants';
 import { UpdateProfileDto, ProfileResponseDto } from '../../common/dtos/update-profile.dto';
 import { DataExportService } from './services/data-export.service';
 import { IsString, IsNotEmpty } from 'class-validator';
@@ -72,6 +70,7 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly userSearchService: UserSearchService,
+    private readonly activityFeedService: ActivityFeedService,
     private readonly dataExportService: DataExportService,
   ) {}
 
@@ -86,12 +85,10 @@ export class UsersController {
   async requestDataExport(@Req() req: AuthenticatedRequest) {
     const userId = this.extractUserId(req);
     return this.dataExportService.queueExport(userId);
-    private readonly activityFeedService: ActivityFeedService,
-    private readonly queueService: QueueService,
-  ) {}
+  }
 
   @Post('device-token')
-  @HttpCode(200)
+  @HttpCode(HttpStatus.OK)
   @UsePipes(
     new ValidationPipe({
       whitelist: true,
@@ -119,7 +116,7 @@ export class UsersController {
   }
 
   @Put('profile')
-  @HttpCode(200)
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update current user profile' })
   @ApiResponse({ status: 200, description: 'Profile updated successfully' })
   @ApiResponse({ status: 400, description: 'Validation error' })
@@ -147,10 +144,13 @@ export class UsersController {
   }
 
   @Post('deactivate')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async deactivate(@Req() req: AuthenticatedRequest): Promise<void> {
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Deactivate current user account' })
+  @ApiResponse({ status: 200, description: 'Account deactivated successfully' })
+  async deactivate(@Req() req: AuthenticatedRequest): Promise<{ message: string }> {
     const userId = this.extractUserId(req);
     await this.usersService.deactivateUser(userId);
+    return { message: 'Account successfully deactivated' };
   }
 
   @Get('activity-feed')
@@ -233,16 +233,6 @@ export class UsersController {
     return { deleted: id };
   }
 
-  @Post('deactivate')
-  @HttpCode(200)
-  async deactivate(
-    @Req() req: AuthenticatedRequest,
-  ): Promise<{ message: string }> {
-    const userId = this.extractUserId(req);
-    await this.usersService.deactivateUser(userId);
-    return { message: 'Account successfully deactivated' };
-  }
-
   private extractUserId(req: AuthenticatedRequest): string {
     const userId = req.user?.id ?? req.user?.sub ?? req.user?.userId;
     if (!userId) {
@@ -254,30 +244,4 @@ export class UsersController {
   private extractIpAddress(req: AuthenticatedRequest): string | undefined {
     return req.ip || req.headers?.['x-forwarded-for']?.toString()?.split(',')[0]?.trim();
   }
-  @Version('1')
-  @Post('data-export')
-  @HttpCode(HttpStatus.ACCEPTED)
-  async requestDataExport(@Req() req: AuthenticatedRequest) {
-    const userId = this.extractUserId(req);
-    await this.queueService.addJob(
-      DATA_PROCESSING_QUEUE,
-      DATA_EXPORT_JOB,
-      { userId },
-      { maxRetries: 3 },
-    );
-
-    return { message: 'Export job queued' };
-  }
-
-  @Version('1')
-  @Patch('profile')
-  @UseGuards(JwtAuthGuard)
-  async updateProfile(
-    @Req() req,
-    @Body() dto: UpdateProfileDto,
-  ) {
-    return this.usersService.updateProfile(
-      req.user.id,
-      dto,
-    );
-  }
+}
