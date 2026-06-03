@@ -33,7 +33,7 @@ describe('database.config', () => {
       });
       expect(options.logging).toBe(false);
       expect(options.maxQueryExecutionTime).toBe(1000);
-      expect(options.logger).toBeInstanceOf(SlowQueryLogger);
+      expect(options.logger).toBe('advanced-console');
     });
 
     it('enables verbose logging in development when DB_LOGGING=true', () => {
@@ -42,6 +42,7 @@ describe('database.config', () => {
         DB_LOGGING: 'true',
       });
       expect(options.logging).toBe(true);
+      expect(options.logger).toBe('advanced-console');
     });
   });
 

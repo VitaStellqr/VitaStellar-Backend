@@ -21,8 +21,11 @@ import { XlmPriceResponseDto } from '../stellar/dto/xlm-price-response.dto';
 import {
   RewardHistoryQueryDto,
   RewardHistoryResponseDto,
-  RewardHistoryItemDto,
 } from './dto/reward-history.dto';
+import {
+  PayoutHistoryQueryDto,
+  PayoutHistoryResponseDto,
+} from './dto/payout-history.dto';
 
 @ApiTags('rewards')
 @Controller('rewards')
@@ -97,5 +100,26 @@ export class RewardController {
   ): Promise<RewardHistoryResponseDto> {
     const userId = req.user.id;
     return this.rewardService.getRewardHistory(userId, queryDto);
+  }
+
+  @Get('payouts')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get payout history',
+    description:
+      'Retrieve paginated payout history for the authenticated user with optional filtering by date and status.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Payout history retrieved successfully',
+    type: PayoutHistoryResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getPayoutHistory(
+    @Request() req: any,
+    @Query() queryDto: PayoutHistoryQueryDto,
+  ): Promise<PayoutHistoryResponseDto> {
+    const userId = req.user.id;
+    return this.rewardService.getPayoutHistory(userId, queryDto);
   }
 }

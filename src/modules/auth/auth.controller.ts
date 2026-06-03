@@ -6,6 +6,7 @@ import {
   HttpStatus,
   UseGuards,
   Req,
+  Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -26,6 +27,7 @@ import { PasswordValidationPipe } from '../../common/pipes/password-validation.p
 import { TwoFactorEnableDto, TwoFactorDisableDto } from './dto/two-factor-enable.dto';
 
 @ApiTags('auth')
+@Version('1')
 @Controller({ path: 'auth', version: '1' })
 @UseGuards(RateLimitGuard)
 export class AuthController {

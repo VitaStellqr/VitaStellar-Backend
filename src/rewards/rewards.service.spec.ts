@@ -372,6 +372,28 @@ describe('RewardService', () => {
     });
   });
 
+  describe('getPayoutHistory', () => {
+    const userId = 'user-1';
+
+    it('should return payout history and support status filter', async () => {
+      mockCacheManager.get.mockResolvedValue(null);
+      mockQueryBuilder.getCount.mockResolvedValue(1);
+      mockQueryBuilder.getMany.mockResolvedValue([mockTransactions[0]]);
+
+      const result = await service.getPayoutHistory(userId, {
+        page: 1,
+        limit: 20,
+        status: RewardStatus.SUCCESS,
+      } as RewardPayoutHistoryQueryDto);
+
+      expect(result.data).toHaveLength(1);
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'reward_transaction.status = :status',
+        { status: RewardStatus.SUCCESS },
+      );
+    });
+  });
+
   // ──────────────────────────────────────────────────────────────────────────
   // processRewardJob
   // ──────────────────────────────────────────────────────────────────────────

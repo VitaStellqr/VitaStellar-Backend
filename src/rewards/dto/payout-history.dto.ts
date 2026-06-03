@@ -1,8 +1,8 @@
 import {
   IsDateString,
   IsEnum,
-  IsOptional,
   IsNumber,
+  IsOptional,
   IsString,
   Min,
 } from 'class-validator';
@@ -10,7 +10,7 @@ import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RewardStatus } from '../enums/reward-status.enum';
 
-export class RewardHistoryQueryDto {
+export class PayoutHistoryQueryDto {
   @ApiPropertyOptional({
     description: 'Page number for pagination',
     default: 1,
@@ -34,7 +34,7 @@ export class RewardHistoryQueryDto {
   limit?: number = 20;
 
   @ApiPropertyOptional({
-    description: 'Start date for filtering rewards (ISO 8601 format)',
+    description: 'Start date for filtering payouts (ISO 8601 format)',
     type: String,
     format: 'date-time',
   })
@@ -43,7 +43,7 @@ export class RewardHistoryQueryDto {
   startDate?: string;
 
   @ApiPropertyOptional({
-    description: 'End date for filtering rewards (ISO 8601 format)',
+    description: 'End date for filtering payouts (ISO 8601 format)',
     type: String,
     format: 'date-time',
   })
@@ -52,77 +52,53 @@ export class RewardHistoryQueryDto {
   endDate?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter by health task category ID',
-    type: String,
-  })
-  @IsOptional()
-  @IsString()
-  categoryId?: string;
-}
-
-export class RewardPayoutHistoryQueryDto extends RewardHistoryQueryDto {
-  @ApiPropertyOptional({
-    description: 'Filter payouts by status',
+    description: 'Filter by payout status',
     enum: RewardStatus,
-    type: String,
   })
   @IsOptional()
   @IsEnum(RewardStatus)
   status?: RewardStatus;
 }
 
-export class RewardHistoryItemDto {
+export class PayoutHistoryItemDto {
   @ApiProperty({
-    description: 'Unique identifier for the reward transaction',
+    description: 'Unique identifier for the payout transaction',
     type: String,
   })
   id: string;
 
   @ApiProperty({
-    description: 'Amount of XLM rewarded',
+    description: 'Amount of XLM paid out',
     type: Number,
   })
   amount: number;
 
   @ApiProperty({
-    description: 'Status of the reward transaction',
-    enum: ['PENDING', 'COMPLETED', 'FAILED'],
-    type: String,
+    description: 'Status of the payout transaction',
+    enum: RewardStatus,
   })
-  status: string;
+  status: RewardStatus;
 
   @ApiPropertyOptional({
-    description: 'Stellar transaction hash (only shown for COMPLETED status)',
+    description: 'Stellar transaction hash for completed payouts',
     type: String,
   })
   stellarTxHash?: string;
 
   @ApiProperty({
-    description: 'Title of the health task',
-    type: String,
-  })
-  taskTitle: string;
-
-  @ApiPropertyOptional({
-    description: 'Category ID of the health task',
-    type: String,
-  })
-  categoryId?: string;
-
-  @ApiProperty({
-    description: 'When the reward transaction was created',
+    description: 'When the payout transaction was created',
     type: String,
     format: 'date-time',
   })
   createdAt: Date;
 }
 
-export class RewardHistoryResponseDto {
+export class PayoutHistoryResponseDto {
   @ApiProperty({
-    description: 'Array of reward transactions',
-    type: [RewardHistoryItemDto],
+    description: 'Array of payout transactions',
+    type: [PayoutHistoryItemDto],
   })
-  data: RewardHistoryItemDto[];
+  data: PayoutHistoryItemDto[];
 
   @ApiProperty({
     description: 'Current page number',

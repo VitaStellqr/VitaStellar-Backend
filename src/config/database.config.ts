@@ -61,14 +61,12 @@ export class SlowQueryLogger implements TypeOrmLogger {
 export function buildDatabaseTypeOrmOptions(
   env: NodeJS.ProcessEnv = process.env,
 ): Pick<TypeOrmModuleOptions, 'logging' | 'maxQueryExecutionTime' | 'logger'> {
-  const isProduction = env.NODE_ENV === 'production';
   const thresholdMs = getSlowQueryThresholdMs(env);
-  const verboseLogging = env.DB_LOGGING === 'true';
 
   return {
     maxQueryExecutionTime: thresholdMs,
-    logging: isProduction ? false : verboseLogging,
-    logger: new SlowQueryLogger(thresholdMs, isProduction),
+    logging: true,
+    logger: 'advanced-console',
   };
 }
 
