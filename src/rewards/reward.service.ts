@@ -10,8 +10,12 @@ import {
   RewardHistoryQueryDto,
   RewardHistoryResponseDto,
   RewardHistoryItemDto,
-  RewardPayoutHistoryQueryDto,
 } from './dto/reward-history.dto';
+import {
+  PayoutHistoryQueryDto,
+  PayoutHistoryResponseDto,
+  PayoutHistoryItemDto,
+} from './dto/payout-history.dto';
 import { RewardTransaction } from './entities/reward-transaction.entity';
 import { RewardStatus } from './enums/reward-status.enum';
 import { TaskCompletion } from '../task-completion/entities/task-completion.entity';
@@ -175,9 +179,49 @@ export class RewardService {
 
   async getPayoutHistory(
     userId: string,
-    queryDto: RewardPayoutHistoryQueryDto,
-  ): Promise<RewardHistoryResponseDto> {
-    return this.getRewardHistory(userId, queryDto);
+    queryDto: PayoutHistoryQueryDto,
+  ): Promise<PayoutHistoryResponseDto> {
+    const { page = 1, limit = 20, startDate, endDate, status } = queryDto;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.rewardTransactionRepository
+      .createQueryBuilder('reward_transaction')
+      .where('reward_transaction.userId = :userId', { userId })
+      .orderBy('reward_transaction.createdAt', 'DESC');
+
+    if (startDate) {
+      queryBuilder.andWhere('reward_transaction.createdAt >= :startDate', {
+        startDate: new Date(startDate),
+      });
+    }
+
+    if (endDate) {
+      queryBuilder.andWhere('reward_transaction.createdAt <= :endDate', {
+        endDate: new Date(endDate),
+      });
+    }
+
+    if (status) {
+      queryBuilder.andWhere('reward_transaction.status = :status', { status });
+    }
+
+    const [transactions, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
+
+    const data: PayoutHistoryItemDto[] = transactions.map((transaction) => ({
+      id: transaction.id,
+      amount: transaction.amount,
+      status: transaction.status,
+      stellarTxHash: transaction.stellarTxHash,
+      createdAt: transaction.createdAt,
+    }));
+
+    return {
+      data,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async processRewardJob(
