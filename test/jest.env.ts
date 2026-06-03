@@ -15,7 +15,7 @@ process.env.TEST_DB_HOST = process.env.TEST_DB_HOST || 'localhost';
 process.env.TEST_DB_PORT = process.env.TEST_DB_PORT || '5432';
 process.env.TEST_DB_USERNAME = process.env.TEST_DB_USERNAME || 'postgres';
 process.env.TEST_DB_PASSWORD = process.env.TEST_DB_PASSWORD || 'postgres';
-process.env.TEST_DB_NAME = process.env.TEST_DB_NAME || 'uzima_test';
+process.env.TEST_DB_NAME = process.env.TEST_DB_NAME || 'vitastellar_test';
 
 // Disable logging during tests for cleaner output
 process.env.TEST_DB_LOGGING = process.env.TEST_DB_LOGGING || 'false';

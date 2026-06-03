@@ -12,9 +12,9 @@ export class AppService {
 
   getWelcome() {
     return {
-      name: 'Stellar Uzima Backend API',
+      name: 'VitaStellar Backend API',
       version: '1.0.0',
-      description: 'Healthcare & Financial Inclusion through Blockchain for African Communities',
+      description: 'Decentralized Health & Wellness Powered by Stellar',
       docs: '/api/docs',
     };
   }

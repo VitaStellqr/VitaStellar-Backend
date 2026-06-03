@@ -23,7 +23,7 @@ const AppDataSource = new DataSource({
   port: parseInt(process.env.DATABASE_PORT || '5432'), // Database port
   username: process.env.DATABASE_USERNAME || 'postgres', // Database username
   password: process.env.DATABASE_PASSWORD || 'postgres', // Database password
-  database: process.env.DATABASE_NAME || 'uzima', // Database name
+  database: process.env.DATABASE_NAME || 'vitastellar', // Database name
   entities: [process.cwd() + '/src/**/*.entity.{ts,js}'], // Auto-discover all entities
   migrations: ['src/migrations/*{.ts,.js}'], // Migration files for CLI
   migrationsTableName: 'migrations',

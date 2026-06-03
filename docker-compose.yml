@@ -1,19 +1,19 @@
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: uzima_postgres
+    container_name: vitastellar_postgres
     environment:
       POSTGRES_USER: ${DB_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: ${DB_NAME:-stellar_uzima_dev}
+      POSTGRES_DB: ${DB_NAME:-vitastellar_dev}
     ports:
       - '${DB_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - uzima_network
+      - vitastellar_network
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-stellar_uzima_dev}']
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-vitastellar_dev}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,14 +21,14 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: uzima_redis
+    container_name: vitastellar_redis
     command: redis-server --appendonly yes
     ports:
       - '${REDIS_PORT:-6379}:6379'
     volumes:
       - redis_data:/data
     networks:
-      - uzima_network
+      - vitastellar_network
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
@@ -40,7 +40,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: uzima_backend
+    container_name: vitastellar_backend
     profiles:
       - full
     environment:
@@ -50,7 +50,7 @@ services:
       DB_PORT: 5432
       DB_USERNAME: ${DB_USERNAME:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
-      DB_NAME: ${DB_NAME:-stellar_uzima_dev}
+      DB_NAME: ${DB_NAME:-vitastellar_dev}
       REDIS_URL: redis://redis:6379
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -64,7 +64,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - uzima_network
+      - vitastellar_network
     volumes:
       - .:/app
       - /app/node_modules
@@ -72,7 +72,7 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: uzima_pgadmin
+    container_name: vitastellar_pgadmin
     profiles:
       - tools
     environment:
@@ -84,12 +84,12 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - uzima_network
+      - vitastellar_network
 
 volumes:
   postgres_data:
   redis_data:
 
 networks:
-  uzima_network:
+  vitastellar_network:
     driver: bridge

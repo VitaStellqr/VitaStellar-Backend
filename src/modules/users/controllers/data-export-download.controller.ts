@@ -32,7 +32,7 @@ export class DataExportDownloadController {
     res.setHeader('Content-Type', 'application/json');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="uzima-export-${exportId}.json"`,
+      `attachment; filename="vitastellar-export-${exportId}.json"`,
     );
     res.send(content);
   }

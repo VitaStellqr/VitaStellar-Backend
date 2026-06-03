@@ -9,7 +9,7 @@ export const typeOrmConfig = async (
   port: (process.env.DATABASE_TYPE === 'sqlite' || (!process.env.DATABASE_TYPE && process.env.NODE_ENV === 'test')) ? undefined : (configService.get<number>('DATABASE_PORT') ?? configService.get<number>('DB_PORT') ?? 5432),
   username: (process.env.DATABASE_TYPE === 'sqlite' || (!process.env.DATABASE_TYPE && process.env.NODE_ENV === 'test')) ? undefined : (configService.get<string>('DATABASE_USERNAME') ?? configService.get<string>('DB_USERNAME') ?? 'postgres'),
   password: (process.env.DATABASE_TYPE === 'sqlite' || (!process.env.DATABASE_TYPE && process.env.NODE_ENV === 'test')) ? undefined : (configService.get<string>('DATABASE_PASSWORD') ?? configService.get<string>('DB_PASSWORD') ?? 'postgres'),
-  database: (process.env.DATABASE_TYPE === 'sqlite' || (!process.env.DATABASE_TYPE && process.env.NODE_ENV === 'test')) ? ':memory:' : (configService.get<string>('DATABASE_NAME') ?? configService.get<string>('DB_NAME') ?? 'uzima'),
+  database: (process.env.DATABASE_TYPE === 'sqlite' || (!process.env.DATABASE_TYPE && process.env.NODE_ENV === 'test')) ? ':memory:' : (configService.get<string>('DATABASE_NAME') ?? configService.get<string>('DB_NAME') ?? 'vitastellar'),
   synchronize: (process.env.DATABASE_TYPE === 'sqlite' || (!process.env.DATABASE_TYPE && process.env.NODE_ENV === 'test')), // Auto-create schema for SQLite tests
   entities: [
     __dirname + '/../entities/*.entity{.ts,.js}',

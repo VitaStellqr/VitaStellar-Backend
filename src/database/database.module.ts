@@ -14,7 +14,7 @@ import { TransactionService } from './services/transaction.service';
         port: configService.get<number>('DB_PORT', 5432),
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'postgres'),
-        database: configService.get<string>('DB_NAME', 'stellar_uzima'),
+        database: configService.get<string>('DB_NAME', 'vitastellar'),
         entities: [__dirname + '/../**/entities/*.entity{.ts,.js}'],
         migrations: [__dirname + '/../database/migrations/*{.ts,.js}'],
         // Never auto-sync in production — rely solely on migrations

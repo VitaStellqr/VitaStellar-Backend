@@ -16,7 +16,7 @@ export class SmsService {
   async sendVerificationCode(phoneNumber: string, code: string): Promise<void> {
     await this.sendSms(
       phoneNumber,
-      `Your Uzima verification code is ${code}. It expires in 10 minutes.`,
+      `Your VitaStellar verification code is ${code}. It expires in 10 minutes.`,
     );
   }
 

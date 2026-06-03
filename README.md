@@ -1,6 +1,6 @@
-# Stellar Uzima Backend
+# VitaStellar Backend
 
-A robust, scalable NestJS backend for the Stellar Uzima health and wellness platform. This repository contains the core API and services that power the Uzima ecosystem.
+A robust, scalable NestJS backend for the VitaStellar health and wellness platform. This repository contains the core API and services that power the VitaStellar ecosystem.
 
 ## 📋 Table of Contents
 
@@ -15,7 +15,7 @@ A robust, scalable NestJS backend for the Stellar Uzima health and wellness plat
 
 ## 🎯 Overview
 
-Stellar Uzima is a comprehensive health and wellness platform designed to help users manage their health goals, track progress, and receive personalized recommendations. The backend provides:
+VitaStellar is a decentralized health and wellness platform built on the Stellar ecosystem. The platform enables users to track health goals, manage wellness activities, receive personalized insights, and maintain ownership of health-related data through secure and transparent blockchain infrastructure. The backend provides:
 
 - **Authentication & Authorization**: Secure user authentication with JWT tokens
 - **User Management**: Complete user profile and account management
@@ -23,6 +23,13 @@ Stellar Uzima is a comprehensive health and wellness platform designed to help u
 - **Data Persistence**: Robust database operations with TypeORM
 - **Error Handling**: Comprehensive error handling and logging
 - **API Documentation**: Auto-generated API documentation with Swagger
+
+### Stellar Integration
+
+- Stellar is used for secure, low-cost health and wellness interactions.
+- Soroban smart contracts power wellness incentives, achievement systems, and future health reward mechanisms.
+- Users maintain ownership and transparency of health-related records and achievements.
+- The platform leverages Stellar's scalability, speed, and affordability.
 
 ## 🛠 Tech Stack
 
@@ -121,7 +128,7 @@ backend/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Stellar-Uzima/Uzima-Backend.git
+   git clone https://github.com/VitaStellar/VitaStellar-Backend.git
    cd backend
    ```
 
@@ -156,7 +163,6 @@ backend/
    ```bash
    npm run start:dev
    ```
-
 The application will be available at `http://localhost:3000`
 
 ## 💻 Development
@@ -221,7 +227,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USERNAME=postgres
 DB_PASSWORD=password
-DB_DATABASE=uzima_dev
+DB_DATABASE=vitastellar_dev
 
 # JWT
 JWT_SECRET=your-secret-key
@@ -353,7 +359,7 @@ docker compose --profile full up -d
 ### Build Docker image only
 
 ```bash
-docker build -t uzima-backend .
+docker build -t vitastellar-backend .
 ```
 
 ### Useful commands
@@ -364,14 +370,9 @@ docker compose down                   # stop services
 docker compose down -v                # stop and remove volumes
 ```
 
-## 📖 Module Guides
+## 📖 Modules
 
-Detailed documentation for each module is available in their respective README files:
-
-- [Auth Module](./src/modules/auth/README.md) - Authentication and authorization
-- [Users Module](./src/modules/users/README.md) - User management
-- [Health Tasks Module](./src/modules/health-tasks/README.md) - Health task tracking
-- [Database Module](./src/database/README.md) - Database setup and migrations
+Feature modules are organized under `src/modules/`: auth, users, notifications, rewards, leaderboard, coupons, streaks, tasks, referrals, audit, admin, and more.
 
 ## 📦 Dependency updates
 
@@ -422,7 +423,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 For issues, questions, or suggestions:
 
-1. Check existing [GitHub Issues](https://github.com/Stellar-Uzima/Uzima-Backend/issues)
+1. Check existing [GitHub Issues](https://github.com/VitaStellar/VitaStellar-Backend/issues)
 2. Create a new issue with a clear description
 3. Contact the maintainers
 

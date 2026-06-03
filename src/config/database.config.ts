@@ -80,7 +80,7 @@ export const databaseConfig = registerAs(
     port: parseInt(process.env.DB_PORT || '5432', 10),
     username: process.env.DB_USERNAME || 'postgres',
     password: process.env.DB_PASSWORD || 'password',
-    database: process.env.DB_DATABASE || 'uzima_dev',
+    database: process.env.DB_DATABASE || 'vitastellar_dev',
     entities: ['dist/**/*.entity{.ts,.js}'],
     migrations: ['dist/database/migrations/*{.ts,.js}'],
     synchronize: process.env.NODE_ENV !== 'production',

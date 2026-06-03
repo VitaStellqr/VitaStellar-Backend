@@ -49,7 +49,7 @@ export class TwoFactorService {
         });
 
     await this.twoFactorRepository.save(record);
-    const otpauthUrl = authenticator.keyuri(user.email || userId, 'Stellar Uzima', secret);
+    const otpauthUrl = authenticator.keyuri(user.email || userId, 'VitaStellar', secret);
     const qrCodeDataUrl = await qrcode.toDataURL(otpauthUrl);
 
     return {

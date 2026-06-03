@@ -75,7 +75,7 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_DB: stellar_uzima_test
+          POSTGRES_DB: vitastellar_test
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
         ports: ["5432:5432"]
@@ -97,7 +97,7 @@ jobs:
       DATABASE_PORT: 5432
       DATABASE_USERNAME: postgres
       DATABASE_PASSWORD: postgres
-      DATABASE_NAME: stellar_uzima_test
+      DATABASE_NAME: vitastellar_test
       REDIS_HOST: localhost
       REDIS_PORT: 6379
       JWT_SECRET: testsecret

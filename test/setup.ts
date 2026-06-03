@@ -95,7 +95,7 @@ export const testDatabaseConfig = {
     : process.env.TEST_DB_NAME ||
       process.env.DB_DATABASE ||
       process.env.DATABASE_NAME ||
-      'uzima_test',
+      'vitastellar_test',
   entities: [process.cwd() + '/src/**/*.entity.{ts,js}'],
   migrations: isSqliteTest ? [] : ['src/migrations/*{.ts,.js}'],
   migrationsTableName: 'migrations',
