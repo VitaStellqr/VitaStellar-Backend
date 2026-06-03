@@ -90,9 +90,9 @@ async function bootstrap() {
 
   // Swagger documentation
   const config = new DocumentBuilder()
-    .setTitle('Stellar Uzima API')
+    .setTitle('VitaStellar API')
     .setDescription(
-      'Healthcare & Financial Inclusion through Blockchain for African Communities',
+      'Decentralized Health & Wellness Powered by Stellar',
     )
     .setVersion('1.0.0')
     .addBearerAuth({
@@ -117,7 +117,7 @@ async function bootstrap() {
   const port = process.env.APP_PORT || 3001;
   await app.listen(port);
 
-  console.log(`🚀 Stellar Uzima Backend running on http://localhost:${port}`);
+  console.log(`🚀 VitaStellar Backend running on http://localhost:${port}`);
   console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
 }
 

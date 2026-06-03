@@ -1,6 +1,6 @@
 # Database Entities
 
-This directory contains all TypeORM entities for the Stellar Uzima backend.
+This directory contains all TypeORM entities for the VitaStellar backend.
 
 ## Overview
 

@@ -1,6 +1,6 @@
 # Database Module
 
-This directory contains database configuration and migrations for Stellar Uzima Backend.
+This directory contains database configuration and migrations for VitaStellar Backend.
 
 ## Structure
 

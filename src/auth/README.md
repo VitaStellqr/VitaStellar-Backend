@@ -1,6 +1,6 @@
 # Password Strength Validation Service
 
-A comprehensive, injectable password validation service for the Uzima-Backend that enforces strong password policies with detailed feedback and scoring.
+A comprehensive, injectable password validation service for the VitaStellar-Backend that enforces strong password policies with detailed feedback and scoring.
 
 ## Features
 
@@ -413,4 +413,4 @@ When contributing to the password validator:
 
 ## License
 
-This service is part of the Uzima-Backend project and follows the same licensing terms.
+This service is part of the VitaStellar-Backend project and follows the same licensing terms.

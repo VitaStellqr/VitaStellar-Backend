@@ -20,7 +20,7 @@ describe('IsValidCouponCodeDecorator', () => {
 
   describe('validate method', () => {
     it('should accept valid coupon codes (6-20 chars, alphanumeric + hyphens)', () => {
-      expect(constraint.validate('UZIMA1A2', null)).toBe(true);
+      expect(constraint.validate('VITA1A2', null)).toBe(true);
       expect(constraint.validate('ABC123', null)).toBe(true);
       expect(constraint.validate('COUPON-CODE-123', null)).toBe(true);
       expect(constraint.validate('test-code', null)).toBe(true);
@@ -95,7 +95,7 @@ describe('IsValidCouponCodeDecorator', () => {
 
   describe('Integration with class-validator', () => {
     it('should validate correct coupon codes in DTO', () => {
-      const dto = new TestCouponDto('UZIMA1A2');
+      const dto = new TestCouponDto('VITA1A2');
       const errors = validateSync(dto);
       expect(errors.length).toBe(0);
     });

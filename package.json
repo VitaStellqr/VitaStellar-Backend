@@ -1,8 +1,8 @@
 {
-  "name": "stellar-uzima-backend",
+  "name": "vitastellar-backend",
   "version": "1.0.0",
-  "description": "Backend API for Stellar Uzima - Healthcare & Financial Inclusion through Blockchain for African Communities",
-  "author": "Stellar Uzima Team",
+  "description": "Backend API for VitaStellar - Decentralized Health & Wellness Powered by Stellar",
+  "author": "VitaStellar Team",
   "license": "MIT",
   "scripts": {
     "prebuild": "rimraf dist",

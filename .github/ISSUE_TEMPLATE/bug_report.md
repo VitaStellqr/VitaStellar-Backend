@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a reproducible bug to help us improve Uzima Backend
+about: Report a reproducible bug to help us improve VitaStellar Backend
 title: "[Bug] "
 labels: bug
 assignees: ''

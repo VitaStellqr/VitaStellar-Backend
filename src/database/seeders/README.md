@@ -183,7 +183,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
-DB_NAME=uzima
+DB_NAME=vitastellar
 ```
 
 Or alternatively:
@@ -193,7 +193,7 @@ DATABASE_HOST=localhost
 DATABASE_PORT=5432
 DATABASE_USERNAME=postgres
 DATABASE_PASSWORD=postgres
-DATABASE_NAME=uzima
+DATABASE_NAME=vitastellar
 ```
 
 ## Best Practices

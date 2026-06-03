@@ -40,7 +40,7 @@ export default registerAs('app', () => {
     nodeEnv: process.env.NODE_ENV || 'development',
     port: parseInt(process.env.PORT ?? '3000', 10) || 3000,
     apiPrefix: process.env.API_PREFIX || 'api',
-    name: 'Stellar Uzima Backend',
+    name: 'VitaStellar Backend',
     version: '1.0.0',
     corsOrigin: corsOrigins[0],
     corsOrigins,

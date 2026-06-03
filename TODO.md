@@ -1,6 +1,6 @@
-# Implementation Checklist - Stellar Uzima Backend
+# Implementation Checklist - VitaStellar Backend
 
-This document outlines all the features and components that need to be implemented for the Stellar Uzima Backend.
+This document outlines all the features and components that need to be implemented for the VitaStellar Backend.
 
 ## 🔐 Authentication Module
 

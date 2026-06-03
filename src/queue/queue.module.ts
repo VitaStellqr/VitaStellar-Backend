@@ -36,7 +36,7 @@ import {
             removeOnComplete: true,
             removeOnFail: false,
           },
-          prefix: 'uzima', // Redis key prefix
+          prefix: 'vitastellar', // Redis key prefix
         };
       },
       inject: [ConfigService],

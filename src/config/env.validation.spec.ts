@@ -12,7 +12,7 @@ describe('envValidationSchema', () => {
     DATABASE_PORT: '5432',
     DATABASE_USERNAME: 'postgres',
     DATABASE_PASSWORD: 'secretpassword',
-    DATABASE_NAME: 'uzima_db',
+    DATABASE_NAME: 'vitastellar_db',
     REDIS_URL: 'redis://127.0.0.1:6379',
     JWT_SECRET: 'this-is-a-secret-key-that-is-at-least-32-chars-long',
     STELLAR_NETWORK: 'testnet',

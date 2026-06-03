@@ -55,7 +55,7 @@ describe('Coupons E2E', () => {
   // Sample coupon data
   const sampleCoupon = {
     id: 'coupon-uuid-1',
-    code: 'UZIMA1A2',
+    code: 'VITA1A2',
     userId,
     discount: 10,
     specialistType: 'doctor',
@@ -224,7 +224,7 @@ describe('Coupons E2E', () => {
 
   describe('POST /coupons/validate - Validate coupon before booking', () => {
     const validatePayload = {
-      code: 'UZIMA1A2',
+      code: 'VITA1A2',
       specialistId: 'specialist-uuid-1',
     };
 
@@ -344,7 +344,7 @@ describe('Coupons E2E', () => {
 
       mockCouponRepository.findOne.mockResolvedValue({
         ...sampleCoupon,
-        code: 'UZIMA1A2', // Stored as uppercase
+        code: 'VITA1A2', // Stored as uppercase
         userId,
       });
 
@@ -352,13 +352,13 @@ describe('Coupons E2E', () => {
       const response = await request(app.getHttpServer())
         .post('/coupons/validate')
         .set('Authorization', `Bearer ${userToken}`)
-        .send({ code: 'uzima1a2', specialistId: 'specialist-uuid-1' })
+        .send({ code: 'vita1a2', specialistId: 'specialist-uuid-1' })
         .expect(200);
 
       expect(response.body.valid).toBe(true);
       expect(mockCouponRepository.findOne).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { code: 'UZIMA1A2' }, // Should be converted to uppercase
+          where: { code: 'VITA1A2' }, // Should be converted to uppercase
         }),
       );
     });
@@ -376,7 +376,7 @@ describe('Coupons E2E', () => {
       const response = await request(app.getHttpServer())
         .post('/coupons/validate')
         .set('Authorization', `Bearer ${userToken}`)
-        .send({ code: '  UZIMA1A2  ', specialistId: 'specialist-uuid-1' })
+        .send({ code: '  VITA1A2  ', specialistId: 'specialist-uuid-1' })
         .expect(200);
 
       expect(response.body.valid).toBe(true);
@@ -402,7 +402,7 @@ describe('Coupons E2E', () => {
       await request(app.getHttpServer())
         .post('/coupons/validate')
         .set('Authorization', `Bearer ${userToken}`)
-        .send({ code: 'UZIMA1A2' })
+        .send({ code: 'VITA1A2' })
         .expect(400);
     });
 
@@ -430,7 +430,7 @@ describe('Coupons E2E', () => {
       const response = await request(app.getHttpServer())
         .post('/coupons/validate')
         .set('Authorization', `Bearer ${userToken}`)
-        .send({ code: 'UZIMA1A2', specialistId: 'specialist-uuid-1' })
+        .send({ code: 'VITA1A2', specialistId: 'specialist-uuid-1' })
         .expect(200);
 
       expect(response.body.valid).toBe(false);
@@ -450,12 +450,12 @@ describe('Coupons E2E', () => {
       await request(app.getHttpServer())
         .post('/coupons/validate')
         .set('Authorization', `Bearer ${userToken}`)
-        .send({ code: 'UZIMA1A2', specialistId: 'specialist-uuid-1' })
+        .send({ code: 'VITA1A2', specialistId: 'specialist-uuid-1' })
         .expect(200);
 
       expect(mockRedisClient.incr).toHaveBeenCalledTimes(1);
       expect(mockRedisClient.expire).toHaveBeenCalledWith(
-        'coupon_validate:UZIMA1A2',
+        'coupon_validate:VITA1A2',
         3600,
       );
     });
@@ -497,7 +497,7 @@ describe('Coupons E2E', () => {
       });
 
       const response = await request(app.getHttpServer())
-        .get('/coupons/validate/UZIMA1A2')
+        .get('/coupons/validate/VITA1A2')
         .set('Authorization', `Bearer ${userToken}`)
         .expect(200);
 
@@ -518,7 +518,7 @@ describe('Coupons E2E', () => {
     it('POST /coupons/apply - Apply coupon to reward calculation (endpoint not implemented)', async () => {
       // This test documents the requirement for a coupon application endpoint
       const applyPayload = {
-        couponCode: 'UZIMA1A2',
+        couponCode: 'VITA1A2',
         totalAmount: 100,
       };
 
@@ -547,7 +547,7 @@ describe('Coupons E2E', () => {
       await request(app.getHttpServer())
         .post('/coupons/apply')
         .set('Authorization', `Bearer ${userToken}`)
-        .send({ couponCode: 'UZIMA1A2', totalAmount: 100 })
+        .send({ couponCode: 'VITA1A2', totalAmount: 100 })
         .expect(200);
 
       // Verify database state updated
