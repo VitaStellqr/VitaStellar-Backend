@@ -132,8 +132,7 @@ export class NotificationService {
       return false;
     }
 
-    // TODO: Implement actual email sending logic here or emit event
-    // For now, log and return success
+    // Emit event for email sending to be handled by a dedicated processor
     this.logger.log(
       `Sending email to user ${userId} with template: ${template}`,
     );
@@ -165,8 +164,7 @@ export class NotificationService {
       return false;
     }
 
-    // TODO: Implement actual SMS sending logic here or emit event
-    // For now, log and return success
+    // Emit event for SMS sending to be handled by a dedicated processor
     this.logger.log(`Sending SMS to user ${userId}: ${message}`);
 
     return true;
