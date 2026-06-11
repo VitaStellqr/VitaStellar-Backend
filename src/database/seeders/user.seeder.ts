@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
+import { Logger } from '@nestjs/common';
 import { BaseSeeder } from './base.seeder';
 import { User } from '../../users/entities/user.entity';
 import { Role } from '../../users/enums/role.enum';
@@ -77,6 +78,7 @@ export class UserSeeder extends BaseSeeder {
   }
 
   async run(): Promise<void> {
+    const logger = new Logger(UserSeeder.name);
     const userRepository = this.dataSource.getRepository(User);
 
     for (const userData of usersData) {
@@ -86,7 +88,7 @@ export class UserSeeder extends BaseSeeder {
       });
 
       if (existingUser) {
-        console.log(`⏭️  User already exists: ${userData.email}`);
+        logger.warn(`⏭️  User already exists: ${userData.email}`);
         continue;
       }
 
@@ -108,10 +110,10 @@ export class UserSeeder extends BaseSeeder {
       });
 
       await userRepository.save(user);
-      console.log(`✅ Created user: ${userData.email} (${userData.role})`);
+      logger.log(`✅ Created user: ${userData.email} (${userData.role})`);
     }
 
     const count = await userRepository.count();
-    console.log(`\n📊 Total users in database: ${count}`);
+    logger.log(`\n📊 Total users in database: ${count}`);
   }
 }

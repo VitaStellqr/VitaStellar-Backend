@@ -152,7 +152,7 @@ export class LeaderboardService {
     );
 
     // Extract IDs to fetch names from our Hash in one go
-    const userIds = [];
+    const userIds: string[] = [];
     for (let i = 0; i < rawTopUsers.length; i += 2) {
       userIds.push(rawTopUsers[i]);
     }

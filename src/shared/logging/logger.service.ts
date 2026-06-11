@@ -1,4 +1,4 @@
-import { Injectable, LoggerService, Inject } from '@nestjs/common';
+import { Injectable, Logger, LoggerService, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { writeFileSync, existsSync, mkdirSync, appendFileSync } from 'fs';
 import { join } from 'path';
@@ -29,6 +29,7 @@ export class CustomLogger implements LoggerService {
   private maxFiles: number;
   private currentLogFile: string;
   private logLevel: LogLevel;
+  private logger = new Logger(CustomLogger.name);
 
   constructor(@Inject(ConfigService) private configService: ConfigService) {
     this.logDir = this.configService.get<string>('LOG_DIR', 'logs');
@@ -135,7 +136,7 @@ export class CustomLogger implements LoggerService {
     try {
       appendFileSync(this.currentLogFile, logLine, 'utf8');
     } catch (error) {
-      console.error('Failed to write to log file:', error);
+      this.logger.error('Failed to write to log file:', error instanceof Error ? error.stack : String(error));
     }
 
     // Also output to console for development
@@ -151,9 +152,9 @@ export class CustomLogger implements LoggerService {
       const reset = '\x1b[0m';
       const color = colorMap[entry.level] || reset;
       
-      console.log(`${color}[${entry.timestamp}] ${entry.level.toUpperCase()}: ${entry.message}${reset}`);
-      if (entry.context) console.log(`Context: ${entry.context}`);
-      if (entry.metadata) console.log('Metadata:', entry.metadata);
+      this.logger.log(`${color}[${entry.timestamp}] ${entry.level.toUpperCase()}: ${entry.message}${reset}`);
+      if (entry.context) this.logger.log(`Context: ${entry.context}`);
+      if (entry.metadata) this.logger.log(`Metadata: ${JSON.stringify(entry.metadata)}`);
     }
   }
 

@@ -14,8 +14,7 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
 import { HealthTasksService } from './health-tasks.service';
@@ -32,7 +31,6 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import {
   TaskAnalyticsService,
-  AnalyticsPeriod,
 } from '../../shared/analytics/task-analytics.service';
 
 // Interface to ensure type safety for the request user
@@ -180,7 +178,7 @@ export class HealthTasksController {
   @ApiResponse({ status: 401, description: 'Missing or invalid bearer token' })
   @ApiResponse({ status: 404, description: 'Task not found' })
   async getActivityHistory(@Param('id') id: string) {
-    return this.activityLogService.getActivityHistory(id);
+    return this.healthTasksService.getTaskActivity(id);
   }
 
   @Get(':id')
@@ -437,7 +435,7 @@ export class HealthTasksController {
   @ApiQuery({ name: 'endDate', required: false, type: String })
   async getTaskAnalytics(
     @Req() req: AuthenticatedRequest,
-    @Query('period') period?: AnalyticsPeriod,
+    @Query('period') period?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('scope') scope?: 'me' | 'global',

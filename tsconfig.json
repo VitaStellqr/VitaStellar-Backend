@@ -13,13 +13,9 @@
     "declaration": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-
-    /* --- THE FIX FOR YOUR SPECIFIC ERROR --- */
-    "ignoreDeprecations": "5.0",
     "moduleResolution": "node",
     "baseUrl": "./",
-    /* --------------------------------------- */
-
+    "ignoreDeprecations": "6.0",
     "paths": {
       "src/*": ["src/*"],
       "@/*": ["src/*"],
@@ -29,7 +25,8 @@
       "@config/*": ["src/config/*"]
     },
     "noImplicitAny": false,
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "useUnknownInCatchVariables": false
   },
   "include": ["src/**/*"],
   "exclude": [

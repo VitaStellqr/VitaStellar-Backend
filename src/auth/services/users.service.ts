@@ -35,12 +35,6 @@ export class UsersService {
     return user;
   }
 
-  async getProfile(userId: string): Promise<Omit<User, 'password'>> {
-    const user = await this.findById(userId);
-    const { password, ...profile } = user as User & { password?: string };
-    return profile;
-  }
-
   async create(
     userData: Partial<User> & {
       name?: string;
@@ -149,11 +143,9 @@ export class UsersService {
     }
   }
 
-  /**
-   * Fetches the profile data for the authenticated user payload response
-   * @param id - User ID
-   */
-  async getProfile(id: string): Promise<User> {
-    return this.findById(id);
+  async getProfile(userId: string): Promise<Omit<User, 'password'>> {
+    const user = await this.findById(userId);
+    const { password, ...profile } = user as User & { password?: string };
+    return profile;
   }
 }

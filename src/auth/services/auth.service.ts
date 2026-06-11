@@ -7,7 +7,6 @@ import {
   NotFoundException,
   Optional,
   UnauthorizedException,
-  InternalServerErrorException,
 } from '@nestjs/common';
 import { authenticator } from 'otplib';
 import * as qrcode from 'qrcode';
@@ -537,7 +536,6 @@ export class AuthService {
     await this.usersService.updateLastLogin(user.id);
 
     const tokens = await this.generateTokens(user.id, user.email || user.phoneNumber, user.role);
-    const tokens = await this.generateTokens(user!.id, user!.email || user!.phoneNumber, user!.role);
     return {
       success: true,
       message: 'Authentication successful',

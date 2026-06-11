@@ -364,16 +364,16 @@ export function Transaction(options: TransactionOptions = {}) {
   ) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (this: any, ...args: any[]) {
       const context = `${target.constructor.name}:${String(propertyKey)}:${Date.now()}`;
-      const transactionService = this.transactionService as TransactionService;
+      const transactionService = (this as any).transactionService as TransactionService;
 
       try {
         return await transactionService.execute(
           context,
           async (queryRunner) => {
             // Set the queryRunner in the method context
-            this.currentQueryRunner = queryRunner;
+            (this as any).currentQueryRunner = queryRunner;
             return originalMethod.apply(this, args);
           },
           options,
@@ -381,7 +381,7 @@ export function Transaction(options: TransactionOptions = {}) {
       } finally {
         // Cleanup
         await transactionService.cleanup(context);
-        this.currentQueryRunner = null;
+        (this as any).currentQueryRunner = null;
       }
     };
 

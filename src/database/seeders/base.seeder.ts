@@ -1,4 +1,5 @@
 import { DataSource } from 'typeorm';
+import { Logger } from '@nestjs/common';
 
 /**
  * Abstract base class for all seeders.
@@ -34,21 +35,22 @@ export abstract class BaseSeeder {
    * Execute the seeder with logging.
    */
   async seed(): Promise<void> {
+    const logger = new Logger(this.getName());
     const name = this.getName();
-    console.log(`\n🌱 Starting seeder: ${name}`);
+    logger.log(`\n🌱 Starting seeder: ${name}`);
 
     try {
       const alreadyExists = await this.exists();
       if (alreadyExists) {
-        console.log(`⏭️  Seeder ${name} - Data already exists, skipping (idempotent)`);
+        logger.warn(`⏭️  Seeder ${name} - Data already exists, skipping (idempotent)`);
         return;
       }
 
       await this.run();
-      console.log(`✅ Seeder ${name} - Completed successfully`);
+      logger.log(`✅ Seeder ${name} - Completed successfully`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`❌ Seeder ${name} - Failed:`, errorMessage);
+      logger.error(`❌ Seeder ${name} - Failed:`, error instanceof Error ? error.stack : errorMessage);
       throw error;
     }
   }

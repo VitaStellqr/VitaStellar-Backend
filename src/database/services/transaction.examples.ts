@@ -251,6 +251,8 @@ export class BatchProcessService {
 // Example 6: Transaction cleanup middleware/interceptor
 @Injectable()
 export class TransactionCleanupInterceptor {
+  private readonly logger = new Logger(TransactionCleanupInterceptor.name);
+
   constructor(
     @InjectTransaction()
     private readonly transactionService: TransactionService,
@@ -264,7 +266,7 @@ export class TransactionCleanupInterceptor {
       // Get current depth to log any unclosed transactions
       const depth = this.transactionService.getTransactionDepth(contextId);
       if (depth > 0) {
-        console.warn(
+        this.logger.warn(
           `Found ${depth} unclosed transactions during cleanup for context ${contextId}`,
         );
       }
@@ -272,7 +274,7 @@ export class TransactionCleanupInterceptor {
       // Force cleanup of any remaining transactions
       await this.transactionService.cleanup(contextId);
     } catch (error) {
-      console.error(
+      this.logger.error(
         `Error during transaction cleanup: ${(error as Error).message}`,
       );
     }

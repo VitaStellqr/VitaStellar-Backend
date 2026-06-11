@@ -1,28 +1,27 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { CsrfMiddleware } from './common/middleware/csrf.middleware';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
-import { MonitoringInterceptor }
-import { GlobalExceptionFilter } from './common/filters/global-exception.filter'; from './common/interceptors/monitoring.interceptor';
-import { TransformInterceptor } from './common/interceptors/transform.interceptor'; from './common/interceptors/monitoring.interceptor';
 import { MonitoringInterceptor } from './common/interceptors/monitoring.interceptor';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { parseCorsOrigins } from './config/app.config';
 
 // Security headers middleware
 function addSecurityHeaders(req, res, next) {
   // HSTS (HTTP Strict Transport Security)
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
-  
+
   // X-Frame-Options to prevent clickjacking
   res.setHeader('X-Frame-Options', 'DENY');
-  
+
   // X-Content-Type-Options to prevent MIME-type sniffing
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  
+
   // Content Security Policy
-  res.setHeader('Content-Security-Policy', 
+  res.setHeader('Content-Security-Policy',
     "default-src 'self'; " +
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.gstatic.com; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
@@ -33,18 +32,18 @@ function addSecurityHeaders(req, res, next) {
     "base-uri 'self'; " +
     "form-action 'self';"
   );
-  
+
   // Additional security headers
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  
+
   next();
 }
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api');
-  app.enableVersioning({ type: VersioningType.URI }); 
+  app.enableVersioning({ type: VersioningType.URI });
 
   // Apply security headers middleware
   app.use(addSecurityHeaders);
@@ -117,8 +116,9 @@ async function bootstrap() {
   const port = process.env.APP_PORT || 3001;
   await app.listen(port);
 
-  console.log(`🚀 VitaStellar Backend running on http://localhost:${port}`);
-  console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
+  const logger = new Logger('Bootstrap');
+  logger.log(`🚀 VitaStellar Backend running on http://localhost:${port}`);
+  logger.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
 }
 
 bootstrap();

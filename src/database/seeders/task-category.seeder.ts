@@ -1,4 +1,5 @@
 import { DataSource } from 'typeorm';
+import { Logger } from '@nestjs/common';
 import { BaseSeeder } from './base.seeder';
 import { TaskCategory, NameTranslations } from '../../tasks/entities/task-category.entity';
 
@@ -161,6 +162,7 @@ export class TaskCategorySeeder extends BaseSeeder {
   }
 
   async run(): Promise<void> {
+    const logger = new Logger(TaskCategorySeeder.name);
     const categoryRepository = this.dataSource.getRepository(TaskCategory);
 
     for (const categoryData of categoriesData) {
@@ -170,7 +172,7 @@ export class TaskCategorySeeder extends BaseSeeder {
       });
 
       if (existingCategory) {
-        console.log(`⏭️  Category already exists: ${categoryData.name}`);
+        logger.warn(`⏭️  Category already exists: ${categoryData.name}`);
         continue;
       }
 
@@ -181,10 +183,10 @@ export class TaskCategorySeeder extends BaseSeeder {
       });
 
       await categoryRepository.save(category);
-      console.log(`✅ Created category: ${categoryData.name}`);
+      logger.log(`✅ Created category: ${categoryData.name}`);
     }
 
     const count = await categoryRepository.count();
-    console.log(`\n📊 Total categories in database: ${count}`);
+    logger.log(`\n📊 Total categories in database: ${count}`);
   }
 }

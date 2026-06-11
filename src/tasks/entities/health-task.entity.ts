@@ -20,27 +20,19 @@ export enum TaskCategory {
   HYDRATION = 'hydration',
 }
 
-+export enum Recurrence {
-+  NONE = 'none',
-+  DAILY = 'daily',
-+  WEEKLY = 'weekly',
-+  MONTHLY = 'monthly',
-+}
-@@
-   @Column({ type: 'enum', enum: TaskCategory })
-   category!: TaskCategory;
-+
-+  // Recurrence for the task; default is NONE (no recurrence)
-+  @Column({ type: 'enum', enum: Recurrence, default: Recurrence.NONE })
-+  recurrence!: Recurrence;
-*** End of File ***
+export enum Recurrence {
+  NONE = 'none',
+  DAILY = 'daily',
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly',
+}
 
 @Entity('health_tasks')
 @Index(['status'])
 @Index(['createdAt'])
 export class HealthTask {
   @PrimaryGeneratedColumn('uuid')
-  id!: string; // Added ! to satisfy strictPropertyInitialization
+  id!: string;
 
   @Column()
   title!: string;
@@ -66,13 +58,15 @@ export class HealthTask {
   })
   tags?: any[];
 
+  @Column({ type: 'enum', enum: Recurrence, default: Recurrence.NONE })
+  recurrence!: Recurrence;
+
   @Column({ type: 'varchar', nullable: true })
   createdBy!: string | null;
 
   @Column({ type: 'varchar', default: 'draft' })
   status!: string;
 
-  // Changed to number for the application logic, TypeORM handles the decimal conversion
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   xlmReward!: number;
 
@@ -88,7 +82,6 @@ export class HealthTask {
   @CreateDateColumn()
   createdAt!: Date;
 
-  // This is CRITICAL for the "Soft Delete" requirement in your task description
   @DeleteDateColumn()
   deletedAt!: Date | null;
 }
