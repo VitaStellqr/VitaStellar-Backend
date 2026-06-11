@@ -4,7 +4,7 @@
     "target": "ES2021",
     "lib": ["ES2021"],
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -13,7 +13,9 @@
     "declaration": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "moduleResolution": "node16",
+    "moduleResolution": "node",
+    "baseUrl": "./",
+    "ignoreDeprecations": "6.0",
     "paths": {
       "src/*": ["src/*"],
       "@/*": ["src/*"],
@@ -23,7 +25,8 @@
       "@config/*": ["src/config/*"]
     },
     "noImplicitAny": false,
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "useUnknownInCatchVariables": false
   },
   "include": ["src/**/*"],
   "exclude": [

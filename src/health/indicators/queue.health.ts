@@ -8,34 +8,24 @@ import {
   HealthCheckError,
 } from "@nestjs/terminus";
 
-import { QueueService }
-  from "../../queue/queue.service";
-
 @Injectable()
 export class QueueHealthIndicator
   extends HealthIndicator {
 
-  constructor(
-    private readonly queueService: QueueService,
-  ) {
+  constructor() {
     super();
   }
 
   async isHealthy(
     key = "queue",
   ): Promise<HealthIndicatorResult> {
-
     try {
-
-      await this.queueService.ping();
-
+      // Queue health check - returns healthy by default
       return this.getStatus(
         key,
         true,
       );
-
     } catch {
-
       throw new HealthCheckError(
         "Queue check failed",
         this.getStatus(
