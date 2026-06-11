@@ -1,4 +1,5 @@
 import { DataSource } from 'typeorm';
+import { Logger } from '@nestjs/common';
 import { BaseSeeder } from './base.seeder';
 import { HealthTask, TaskCategory } from '../../tasks/entities/health-task.entity';
 import { TaskCategory as TaskCategoryEntity } from '../../tasks/entities/task-category.entity';
@@ -136,7 +137,8 @@ export class HealthTaskSeeder extends BaseSeeder {
       });
 
       if (existingTask) {
-        console.log(`⏭️  Health task already exists: ${taskData.title}`);
+        const logger = new Logger(HealthTaskSeeder.name);
+        logger.warn(`⏭️  Health task already exists: ${taskData.title}`);
         continue;
       }
 
@@ -153,10 +155,12 @@ export class HealthTaskSeeder extends BaseSeeder {
       });
 
       await healthTaskRepository.save(task);
-      console.log(`✅ Created health task: ${taskData.title}`);
+      const logger2 = new Logger(HealthTaskSeeder.name);
+      logger2.log(`✅ Created health task: ${taskData.title}`);
     }
 
     const count = await healthTaskRepository.count();
-    console.log(`\n📊 Total health tasks in database: ${count}`);
+    const logger3 = new Logger(HealthTaskSeeder.name);
+    logger3.log(`\n📊 Total health tasks in database: ${count}`);
   }
 }

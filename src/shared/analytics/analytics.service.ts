@@ -50,11 +50,12 @@ export class ConsoleAnalyticsProvider implements AnalyticsProvider {
 
   async trackEvent(eventName: string, payload: Record<string, unknown> = {}): Promise<void> {
     this.logger.log(`Analytics event tracked: ${eventName}`);
-    console.log(`[Analytics] ${eventName}`, payload);
   }
 }
 
 export class ExternalAnalyticsProvider implements AnalyticsProvider {
+  private readonly logger = new Logger(ExternalAnalyticsProvider.name);
+
   constructor(
     private readonly apiKey?: string,
     private readonly endpoint: string = 'https://analytics.example.com/track',
@@ -67,10 +68,10 @@ export class ExternalAnalyticsProvider implements AnalyticsProvider {
 
     try {
       // Placeholder for real external analytics integration.
-      console.log(`[ExternalAnalytics] sending event ${eventName} to ${this.endpoint}`);
-      console.log({ apiKey: this.apiKey, eventName, payload });
+      this.logger.warn(`[ExternalAnalytics] sending event ${eventName} to ${this.endpoint}`);
+      this.logger.debug(JSON.stringify({ apiKey: this.apiKey, eventName, payload }));
     } catch (error) {
-      console.error('[ExternalAnalytics] failed to track event', error);
+      this.logger.error('[ExternalAnalytics] failed to track event', error instanceof Error ? error.stack : String(error));
     }
   }
 }
@@ -83,12 +84,12 @@ export class ExternalAnalyticsProvider implements AnalyticsProvider {
  */
 @Injectable()
 export class AnalyticsService {
+  private readonly logger = new Logger(AnalyticsService.name);
+
   // In-memory operational vectors (kept for backward compatibility with legacy callers)
   private userActionsLog: UserActionPayload[] = [];
   private systemMetricsLog: SystemMetricPayload[] = [];
 
-@Injectable()
-export class AnalyticsService {
   constructor(
     @Inject(ANALYTICS_PROVIDERS)
     private readonly providers: AnalyticsProvider[],
@@ -102,7 +103,7 @@ export class AnalyticsService {
     await Promise.all(
       this.providers.map((provider) =>
         provider.trackEvent(eventName, payload).catch((error) => {
-          console.error(`[AnalyticsService] provider failed to track ${eventName}`, error);
+          this.logger.error(`[AnalyticsService] provider failed to track ${eventName}`, error instanceof Error ? error.stack : String(error));
         }),
       ),
     );

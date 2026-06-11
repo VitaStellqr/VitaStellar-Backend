@@ -1,4 +1,5 @@
 import { DataSource } from 'typeorm';
+import { Logger } from '@nestjs/common';
 import { TaskCategory } from '../../../tasks/entities/task-category.entity';
 
 const categories = [
@@ -140,6 +141,7 @@ const categories = [
 export async function seedTaskCategories(
   dataSource: DataSource,
 ): Promise<void> {
+  const logger = new Logger('SeedTaskCategories');
   const categoryRepository = dataSource.getRepository(TaskCategory);
 
   for (const categoryData of categories) {
@@ -150,9 +152,9 @@ export async function seedTaskCategories(
     if (!existing) {
       const category = categoryRepository.create(categoryData);
       await categoryRepository.save(category);
-      console.log(`✅ Seeded category: ${categoryData.name}`);
+      logger.log(`✅ Seeded category: ${categoryData.name}`);
     } else {
-      console.log(`⏭️  Category already exists: ${categoryData.name}`);
+      logger.warn(`⏭️  Category already exists: ${categoryData.name}`);
     }
   }
 }

@@ -4,6 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
   Inject,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -548,12 +549,13 @@ export class UsersService {
     }
 
     if (changedFields.length > 0) {
-      console.log(`Profile updated for user ${userId}:`, {
+      const logger = new Logger(UsersService.name);
+      logger.log(`Profile updated for user ${userId}`, JSON.stringify({
         changedFields,
         ipAddress,
         userAgent,
         timestamp: new Date(),
-      });
+      }));
     }
 
     return this.getProfile(updatedUser.id);
