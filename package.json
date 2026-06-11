@@ -71,6 +71,7 @@
     "stellar-sdk": "^11.0.0",
     "twilio": "^6.0.0",
     "typeorm": "^0.3.0",
+    "typescript-eslint": "^8.61.0",
     "webpack": "^5.107.2",
     "xss": "^1.0.15"
   },
