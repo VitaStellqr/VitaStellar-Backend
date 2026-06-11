@@ -1,5 +1,5 @@
 // src/stellar/stellar.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotImplementedException } from '@nestjs/common';
 import StellarSdk from 'stellar-sdk';
 import { CreateStellarDto } from './dto/create-stellar.dto';
 import { UpdateStellarDto } from './dto/update-stellar.dto';
@@ -35,24 +35,26 @@ export class StellarService {
     }
   }
 
-  async create(_createStellarDto: CreateStellarDto): Promise<unknown> {
-    return {};
+  async create(_createStellarDto: CreateStellarDto): Promise<never> {
+    throw new NotImplementedException('Stellar CRUD operations are not yet implemented');
   }
 
-  async findAll(): Promise<unknown[]> {
-    return [];
+  async findAll(): Promise<never> {
+    throw new NotImplementedException('Stellar CRUD operations are not yet implemented');
   }
 
-  async findOne(_id: number): Promise<unknown> {
-    return null;
+  async findOne(_id: number): Promise<never> {
+    throw new NotImplementedException('Stellar CRUD operations are not yet implemented');
   }
 
   async update(
     _id: number,
     _updateStellarDto: UpdateStellarDto,
-  ): Promise<unknown> {
-    return {};
+  ): Promise<never> {
+    throw new NotImplementedException('Stellar CRUD operations are not yet implemented');
   }
 
-  async remove(_id: number): Promise<void> {}
+  async remove(_id: number): Promise<never> {
+    throw new NotImplementedException('Stellar CRUD operations are not yet implemented');
+  }
 }
