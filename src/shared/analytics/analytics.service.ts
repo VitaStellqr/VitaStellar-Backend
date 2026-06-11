@@ -37,8 +37,6 @@ export interface AnalyticsReport {
   averageSystemMetrics: Record<string, number>;
 }
 
-import { Inject, Injectable, Logger } from '@nestjs/common';
-
 export const ANALYTICS_PROVIDERS = 'ANALYTICS_PROVIDERS';
 
 export interface AnalyticsProvider {
