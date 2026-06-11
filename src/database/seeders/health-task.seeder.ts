@@ -151,7 +151,7 @@ export class HealthTaskSeeder extends BaseSeeder {
         status: taskData.status || 'active',
         createdBy: 'system',
         isActive: true,
-        targetProfile: taskData.targetProfile || null,
+        targetProfile: taskData.targetProfile || undefined,
       });
 
       await healthTaskRepository.save(task);
