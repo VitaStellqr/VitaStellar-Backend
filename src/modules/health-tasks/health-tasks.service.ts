@@ -183,7 +183,7 @@ export class HealthTasksService {
     await this.taskRepository.softDelete(id);
   }
 
-  async getTaskActivity(taskId: string): Promise<import('../../../database/entities/task-activity.entity').TaskActivity[]> {
+  async getTaskActivity(taskId: string): Promise<any[]> {
     return this.activityLogService.getActivityHistory(taskId);
   }
 
