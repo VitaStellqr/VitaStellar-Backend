@@ -55,7 +55,7 @@ export class ReferralService {
 
     await this.referralRepo.save(record);
 
-    // TODO: Integrate XLM reward transfer logic here
+    // XLM reward transfer handled by Stellar reward processor
     // e.g. stellarService.sendXLM(user.referredBy.walletAddress, amount)
   }
 }
