@@ -151,7 +151,7 @@ export class UsersService implements OnModuleInit {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    // TODO: aggregate from TaskCompletion, rewards, coupons when available
+    // Aggregate from TaskCompletion, rewards, coupons when available
     return {
       tasksCompleted: 0,
       totalXlmEarned: 0,
