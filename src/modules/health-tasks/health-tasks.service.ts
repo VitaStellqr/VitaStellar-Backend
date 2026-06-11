@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { HealthTask } from '../../tasks/entities/health-task.entity';
+import { HealthTask, TaskCategory as HealthTaskCategory } from '../../tasks/entities/health-task.entity';
 import { UpdateHealthTaskDto } from '../../common/dtos/update-health-task.dto';
 import { CreateHealthTaskDto } from '../../common/dtos/create-health-task.dto';
 import {
@@ -13,7 +13,7 @@ import {
   PrioritizableTask,
 } from './services/priority.service';
 import { ActivityLogService } from './services/activity-log.service';
-import { TaskCategory } from '../../database/entities/task-category.entity';
+import { TaskCategory as TaskCategoryEntity } from '../../database/entities/task-category.entity';
 import { TaskTag } from '../../database/entities/task-tag.entity';
 
 @Injectable()
@@ -96,14 +96,14 @@ export class HealthTasksService {
         });
         if (category) {
           task.categoryId = dto.categoryId;
-          task.category = category;
+          (task as any).category = HealthTaskCategory.HYDRATION;
         } else {
-          task.categoryId = null;
-          task.category = null;
+          task.categoryId = undefined;
+          (task as any).category = undefined;
         }
       } else {
-        task.categoryId = null;
-        task.category = null;
+        task.categoryId = undefined;
+        (task as any).category = undefined;
       }
     }
 

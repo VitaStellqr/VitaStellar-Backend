@@ -38,7 +38,7 @@ export class DuplicationService {
       title: overrides.title || `${originalTask.title} (Copy)`,
     });
 
-    return this.taskRepository.save(duplicatedTask);
+    return this.taskRepository.save(duplicatedTask as any);
   }
 
   async bulkDuplicate(ids: string[], commonOverrides: any = {}) {
@@ -61,6 +61,6 @@ export class DuplicationService {
       });
     });
 
-    return this.taskRepository.save(duplicates);
+    return this.taskRepository.save(duplicates as any);
   }
 }

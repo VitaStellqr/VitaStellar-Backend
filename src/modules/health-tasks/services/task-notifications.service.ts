@@ -50,7 +50,7 @@ export class TaskNotificationsService {
   }
 
   async notifyShared(task: HealthTask, recipientId: string, sharedByName: string): Promise<void> {
-    if (!await this.isEnabled(recipientId, 'shared')) return;
+    if (!await this.isPrefEnabled(recipientId, 'shared')) return;
 
     await this.send(recipientId, task.id, 'shared', {
       title: `Task shared with you`,
@@ -96,7 +96,7 @@ export class TaskNotificationsService {
     event: TaskNotificationEvent,
     pref?: NotificationPreference,
   ): Promise<boolean> {
-    const userPref = pref || await this.preferenceRepo.findOne({ where: { userId } } as any);
+    const userPref = pref || await this.preferenceRepo.findOne({ where: { userId } } as any) || undefined;
     if (!userPref) return true;
 
     const key = `task_${event}` as keyof typeof userPref;
