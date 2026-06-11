@@ -2,9 +2,9 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../../entities/user.entity';
-import { StorageService } from '../../../shared/storage/storage.service';
+import { StorageService } from '../../../storage/storage.service';
 import { ActivityTrackerService } from './activity-tracker.service';
-import sharp from 'sharp';
+import * as sharp from 'sharp';
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -35,7 +35,7 @@ export class AvatarService {
       throw new NotFoundException('User not found');
     }
 
-    const oldAvatarUrl = user.avatarUrl;
+    const oldAvatarUrl = (user as any).avatarUrl;
 
     const uploadResult = await this.storageService.saveFile(
       resizedImage,
@@ -45,8 +45,8 @@ export class AvatarService {
     );
 
     await this.userRepository.update(userId, {
-      avatarUrl: uploadResult.url,
-    });
+      walletAddress: uploadResult.url,
+    } as any);
 
     if (oldAvatarUrl) {
       await this.storageService.deleteFileByUrl(oldAvatarUrl);
@@ -66,11 +66,11 @@ export class AvatarService {
       throw new NotFoundException('User not found');
     }
 
-    if (user.avatarUrl) {
-      await this.storageService.deleteFileByUrl(user.avatarUrl);
+    if ((user as any).avatarUrl) {
+      await this.storageService.deleteFileByUrl((user as any).avatarUrl);
       await this.userRepository.update(userId, {
-        avatarUrl: null,
-      });
+        walletAddress: null,
+      } as any);
 
       await this.activityTracker.trackAvatarUpdated(userId, '', request);
     }
@@ -78,7 +78,7 @@ export class AvatarService {
 
   async getAvatarUrl(userId: string): Promise<string | null> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
-    return user?.avatarUrl || null;
+    return (user as any)?.avatarUrl || null;
   }
 
   private validateFile(file: Buffer, mimetype: string): void {

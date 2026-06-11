@@ -38,7 +38,7 @@ export class ReportExportService {
     queryBuilder
       .stream()
       .then((cursor) => {
-        cursor.on('data', (row: Record<string, unknown>) => {
+        cursor.on('data', (row: any) => {
           const line = [
             row['rt_id'] ?? '',
             row['rt_userId'] ?? '',

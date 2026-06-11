@@ -58,14 +58,14 @@ export class RewardService {
    * Emits reward.milestone when user's total XLM crosses a threshold; coupon service listens and creates coupons.
    */
   async emitMilestoneIfReached(userId: string): Promise<void> {
-    const { sum } = await this.rewardTransactionRepository
+    const result = await this.rewardTransactionRepository
       .createQueryBuilder('rt')
       .select('COALESCE(SUM(rt.amount), 0)', 'sum')
       .where('rt.userId = :userId', { userId })
       .andWhere('rt.status = :status', { status: RewardStatus.SUCCESS })
       .getRawOne<{ sum: string }>();
 
-    const totalXlm = parseFloat(sum ?? '0');
+    const totalXlm = parseFloat(result?.sum ?? '0');
     for (const milestone of XLM_MILESTONES) {
       if (totalXlm >= milestone) {
         this.eventEmitter.emit(REWARD_MILESTONE_EVENT, {

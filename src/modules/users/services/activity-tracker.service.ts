@@ -6,7 +6,6 @@ import { Request } from 'express';
 
 interface AuthenticatedRequest extends Request {
   user: { userId: string; role?: string };
-  get(header: string): string | undefined;
   headers: Record<string, string | string[] | undefined>;
   connection?: { remoteAddress?: string };
   socket?: { remoteAddress?: string };
