@@ -78,6 +78,7 @@ export class UserSeeder extends BaseSeeder {
   }
 
   async run(): Promise<void> {
+    const logger = new Logger(UserSeeder.name);
     const userRepository = this.dataSource.getRepository(User);
 
     for (const userData of usersData) {
@@ -87,7 +88,6 @@ export class UserSeeder extends BaseSeeder {
       });
 
       if (existingUser) {
-        const logger = new Logger(UserSeeder.name);
         logger.warn(`⏭️  User already exists: ${userData.email}`);
         continue;
       }
@@ -110,12 +110,10 @@ export class UserSeeder extends BaseSeeder {
       });
 
       await userRepository.save(user);
-      const logger2 = new Logger(UserSeeder.name);
-      logger2.log(`✅ Created user: ${userData.email} (${userData.role})`);
+      logger.log(`✅ Created user: ${userData.email} (${userData.role})`);
     }
 
     const count = await userRepository.count();
-    const logger3 = new Logger(UserSeeder.name);
-    logger3.log(`\n📊 Total users in database: ${count}`);
+    logger.log(`\n📊 Total users in database: ${count}`);
   }
 }

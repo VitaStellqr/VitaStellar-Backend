@@ -128,6 +128,7 @@ export class HealthTaskSeeder extends BaseSeeder {
   }
 
   async run(): Promise<void> {
+    const logger = new Logger(HealthTaskSeeder.name);
     const healthTaskRepository = this.dataSource.getRepository(HealthTask);
 
     for (const taskData of healthTasksData) {
@@ -137,7 +138,6 @@ export class HealthTaskSeeder extends BaseSeeder {
       });
 
       if (existingTask) {
-        const logger = new Logger(HealthTaskSeeder.name);
         logger.warn(`⏭️  Health task already exists: ${taskData.title}`);
         continue;
       }
@@ -155,12 +155,10 @@ export class HealthTaskSeeder extends BaseSeeder {
       });
 
       await healthTaskRepository.save(task);
-      const logger2 = new Logger(HealthTaskSeeder.name);
-      logger2.log(`✅ Created health task: ${taskData.title}`);
+      logger.log(`✅ Created health task: ${taskData.title}`);
     }
 
     const count = await healthTaskRepository.count();
-    const logger3 = new Logger(HealthTaskSeeder.name);
-    logger3.log(`\n📊 Total health tasks in database: ${count}`);
+    logger.log(`\n📊 Total health tasks in database: ${count}`);
   }
 }

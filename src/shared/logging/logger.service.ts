@@ -28,6 +28,7 @@ export class CustomLogger implements LoggerService {
   private maxFileSize: number;
   private maxFiles: number;
   private currentLogFile: string;
+  private logLevel: LogLevel;
   private logger = new Logger(CustomLogger.name);
 
   constructor(@Inject(ConfigService) private configService: ConfigService) {

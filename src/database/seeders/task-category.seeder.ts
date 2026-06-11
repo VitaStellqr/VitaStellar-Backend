@@ -162,6 +162,7 @@ export class TaskCategorySeeder extends BaseSeeder {
   }
 
   async run(): Promise<void> {
+    const logger = new Logger(TaskCategorySeeder.name);
     const categoryRepository = this.dataSource.getRepository(TaskCategory);
 
     for (const categoryData of categoriesData) {
@@ -171,7 +172,6 @@ export class TaskCategorySeeder extends BaseSeeder {
       });
 
       if (existingCategory) {
-        const logger = new Logger(TaskCategorySeeder.name);
         logger.warn(`⏭️  Category already exists: ${categoryData.name}`);
         continue;
       }
@@ -183,12 +183,10 @@ export class TaskCategorySeeder extends BaseSeeder {
       });
 
       await categoryRepository.save(category);
-      const logger2 = new Logger(TaskCategorySeeder.name);
-      logger2.log(`✅ Created category: ${categoryData.name}`);
+      logger.log(`✅ Created category: ${categoryData.name}`);
     }
 
     const count = await categoryRepository.count();
-    const logger3 = new Logger(TaskCategorySeeder.name);
-    logger3.log(`\n📊 Total categories in database: ${count}`);
+    logger.log(`\n📊 Total categories in database: ${count}`);
   }
 }
