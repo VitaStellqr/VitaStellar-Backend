@@ -20,7 +20,8 @@ export class RedisHealthIndicator
     key = "redis",
   ): Promise<HealthIndicatorResult> {
     try {
-      // Redis health check - returns healthy by default
+      // TODO: Re-enable actual Redis health check once RedisService is available
+      // Redis health check - returns healthy by default (temporary stub)
       return this.getStatus(
         key,
         true,

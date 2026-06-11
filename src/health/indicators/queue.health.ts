@@ -20,7 +20,8 @@ export class QueueHealthIndicator
     key = "queue",
   ): Promise<HealthIndicatorResult> {
     try {
-      // Queue health check - returns healthy by default
+      // TODO: Re-enable actual queue health check once QueueService is available
+      // Queue health check - returns healthy by default (temporary stub)
       return this.getStatus(
         key,
         true,
