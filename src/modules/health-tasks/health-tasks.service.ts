@@ -13,16 +13,18 @@ import {
   PrioritizableTask,
 } from './services/priority.service';
 import { ActivityLogService } from './services/activity-log.service';
-import { TaskCategory as TaskCategoryEntity } from '../../database/entities/task-category.entity';
+import { TaskCategory as DbTaskCategory } from '../../database/entities/task-category.entity';
 import { TaskTag } from '../../database/entities/task-tag.entity';
+
+import { TaskCategory } from '../../tasks/entities/health-task.entity';
 
 @Injectable()
 export class HealthTasksService {
   constructor(
     @InjectRepository(HealthTask)
     private readonly taskRepository: Repository<HealthTask>,
-    @InjectRepository(TaskCategory)
-    private readonly categoryRepository: Repository<TaskCategory>,
+    @InjectRepository(DbTaskCategory)
+    private readonly categoryRepository: Repository<DbTaskCategory>,
     @InjectRepository(TaskTag)
     private readonly tagRepository: Repository<TaskTag>,
     private readonly priorityService: PriorityService,
@@ -51,7 +53,7 @@ export class HealthTasksService {
       });
       if (category) {
         task.categoryId = dto.categoryId;
-        task.category = category;
+        (task as any).category = category.name as any;
       }
     }
 

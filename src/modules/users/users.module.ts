@@ -9,11 +9,12 @@ import { SmsService } from '../../shared/sms/sms.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { User } from '../../entities/user.entity';
+import { Coupon } from '../../entities/coupon.entity';
+import { HealthTask } from '../../tasks/entities/health-task.entity';
 import { UsersController } from './users.controller';
 import { DataExportDownloadController } from './controllers/data-export-download.controller';
 import { UsersService } from './users.service';
 import { QueueModule } from '../../queue/queue.module';
-import { UserActivity } from '../../database/entities/user-activity.entity';
 import { ActivityTrackerService } from './services/activity-tracker.service';
 import { AvatarService } from './services/avatar.service';
 import { DataExportService } from './services/data-export.service';
@@ -43,7 +44,6 @@ import { NotificationsModule } from '../../notifications/notifications.module';
       ReferralRecord,
       Coupon,
       HealthTask,
-      Notification,
     ]),
     CacheModule.register({
       ttl: 300,
@@ -70,11 +70,5 @@ import { NotificationsModule } from '../../notifications/notifications.module';
     DataExportProcessor,
     QueueService,
   ],
-    ActivityFeedService,
-    AvatarService,
-    StorageService,
-    DataExportProcessor,
-  ],
-  exports: [UsersService, UserSearchService, PhoneVerificationService],
 })
 export class UsersModule {}

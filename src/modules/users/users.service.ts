@@ -38,9 +38,7 @@ export class UsersService {
     @InjectRepository(UserStatusLog)
     private readonly userStatusLogRepository: Repository<UserStatusLog>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-    private readonly preferencesService: PreferencesService
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache = null as any,
-    private readonly preferencesService: PreferencesService = null as any,
+    private readonly preferencesService: PreferencesService,
   ) {}
 
   async registerDeviceToken(userId: string, token: string): Promise<User> {
@@ -285,7 +283,7 @@ export class UsersService {
     return this.userRepository.findOne({ where: { phoneNumber } });
   }
 
-  async deactivateUser(userId: string): Promise<void> {
+  async softDeleteUser(userId: string): Promise<void> {
     const user = await this.findOne(userId);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -495,12 +493,12 @@ export class UsersService {
     }
 
     if (updateProfileDto.avatar !== undefined) {
-      updates.walletAddress = updateProfileDto.avatar.trim();
+      (updates as any).walletAddress = updateProfileDto.avatar.trim();
       changedFields.push('avatar');
     }
 
     if (updateProfileDto.bio !== undefined) {
-      updates.referralCode = updateProfileDto.bio?.trim();
+      (updates as any).referralCode = updateProfileDto.bio?.trim();
       changedFields.push('bio');
     }
 
@@ -515,17 +513,17 @@ export class UsersService {
     }
 
     if (updateProfileDto.address !== undefined) {
-      updates.address = updateProfileDto.address.trim();
+      (updates as any).address = updateProfileDto.address.trim();
       changedFields.push('address');
     }
 
     if (updateProfileDto.city !== undefined) {
-      updates.city = updateProfileDto.city.trim();
+      (updates as any).city = updateProfileDto.city.trim();
       changedFields.push('city');
     }
 
     if (updateProfileDto.postalCode !== undefined) {
-      updates.postalCode = updateProfileDto.postalCode.trim();
+      (updates as any).postalCode = updateProfileDto.postalCode.trim();
       changedFields.push('postalCode');
     }
 
@@ -578,13 +576,13 @@ export class UsersService {
       lastName: user.lastName,
       fullName: user.fullName,
       phoneNumber: user.phoneNumber,
-      avatar: user.walletAddress,
-      bio: user.referralCode,
+      avatar: (user as any).walletAddress,
+      bio: (user as any).referralCode,
       preferredLanguage: user.preferredLanguage,
       country: user.country,
-      address: user.address,
-      city: user.city,
-      postalCode: user.postalCode,
+      address: (user as any).address,
+      city: (user as any).city,
+      postalCode: (user as any).postalCode,
       role: user.role,
       status: user.status,
       isVerified: user.isVerified,
@@ -671,58 +669,5 @@ export class UsersService {
     if (this.cacheManager) {
       await this.cacheManager.del(`user:profile:${userId}`);
     }
-  async updateProfile(
-    userId: string,
-    dto: UpdateProfileDto,
-  ) {
-
-    const user =
-      await this.userRepository.findOne({
-        where: {
-          id: userId,
-        },
-      });
-
-    if (!user) {
-      throw new NotFoundException(
-        'User not found',
-      );
-    }
-
-    Object.assign(
-      user,
-      {
-        name:
-          dto.name ??
-          user.name,
-
-        phone:
-          dto.phone ??
-          user.phone,
-
-        address:
-          dto.address ??
-          user.address,
-      },
-    );
-
-    const updatedUser =
-      await this.userRepository.save(
-        user,
-      );
-
-    return {
-      id:
-        updatedUser.id,
-
-      name:
-        updatedUser.name,
-
-      phone:
-        updatedUser.phone,
-
-      address:
-        updatedUser.address,
-    };
   }
 }

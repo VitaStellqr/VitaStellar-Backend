@@ -69,7 +69,7 @@ export class TaskNotificationsService {
 
   async checkAndNotifyDueSoon(tasks: HealthTask[], userId: string): Promise<void> {
     const now = Date.now();
-    const pref = await this.preferenceRepo.findOne({ where: { userId } } as any);
+    const pref = await this.preferenceRepo.findOne({ where: { userId } } as any) || undefined;
 
     for (const task of tasks) {
       const dueDate = (task.targetProfile as any)?.dueDate;

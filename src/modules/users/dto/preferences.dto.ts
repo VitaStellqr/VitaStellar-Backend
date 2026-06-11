@@ -1,7 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsEnum, IsBoolean, IsObject, IsNumber, Matches, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Theme, NotificationType } from '../../database/entities/user-preferences.entity';
+// Theme and NotificationType enums are defined locally until the entity is moved
+export enum Theme {
+  LIGHT = 'light',
+  DARK = 'dark',
+  SYSTEM = 'system',
+}
+
+export enum NotificationType {
+  EMAIL = 'email',
+  PUSH = 'push',
+  SMS = 'sms',
+}
 
 export class NotificationPreferencesDto {
   @ApiPropertyOptional({

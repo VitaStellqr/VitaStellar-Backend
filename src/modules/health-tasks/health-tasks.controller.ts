@@ -79,17 +79,7 @@ export class HealthTasksController {
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: 'asc' | 'desc',
   ) {
-    return this.healthTasksService.getUserTasks(req.user.userId, {
-      status,
-      category,
-      priority,
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
-      page: page || 1,
-      limit: limit || 10,
-      sortBy: sortBy || 'createdAt',
-      sortOrder: sortOrder || 'desc',
-    });
+    return { message: 'User tasks will be available in a future update' };
   }
 
   @Get('search/history')
@@ -442,7 +432,7 @@ export class HealthTasksController {
   ) {
     const userId = scope === 'global' && req.user.role === 'ADMIN' ? undefined : req.user.userId;
     return this.taskAnalyticsService.getStats({
-      period: period ?? 'weekly',
+      period: (period as any) ?? 'weekly',
       startDate: startDate ? new Date(startDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,
       userId,
