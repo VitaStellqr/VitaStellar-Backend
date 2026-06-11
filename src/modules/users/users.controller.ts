@@ -8,7 +8,7 @@ import {
   Body,
   Req,
   Query,
-   Patch,
+  Patch,
   UseGuards,
   UsePipes,
   ValidationPipe,
@@ -71,6 +71,8 @@ export class UsersController {
     private readonly usersService: UsersService,
     private readonly userSearchService: UserSearchService,
     private readonly dataExportService: DataExportService,
+    private readonly activityFeedService: ActivityFeedService,
+    private readonly queueService: QueueService,
   ) {}
 
   @Post('data-export')
@@ -83,10 +85,14 @@ export class UsersController {
   @ApiResponse({ status: 202, description: 'Export job queued' })
   async requestDataExport(@Req() req: AuthenticatedRequest) {
     const userId = this.extractUserId(req);
-    return this.dataExportService.queueExport(userId);
-    private readonly activityFeedService: ActivityFeedService,
-    private readonly queueService: QueueService,
-  ) {}
+    await this.queueService.addJob(
+      DATA_PROCESSING_QUEUE,
+      DATA_EXPORT_JOB,
+      { userId },
+      { maxRetries: 3 },
+    );
+    return { message: 'Export job queued' };
+  }
 
   @Post('device-token')
   @HttpCode(200)
@@ -144,11 +150,28 @@ export class UsersController {
     );
   }
 
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard)
+  async updateProfileAlternate(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: UpdateProfileDto,
+  ) {
+    return this.usersService.updateProfile(
+      req.user?.id || '',
+      dto,
+    );
+  }
+
   @Post('deactivate')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async deactivate(@Req() req: AuthenticatedRequest): Promise<void> {
+  @HttpCode(200)
+  async deactivate(
+    @Req() req: AuthenticatedRequest,
+  ): Promise<{ message: string }> {
     const userId = this.extractUserId(req);
     await this.usersService.deactivateUser(userId);
+    return { message: 'Account successfully deactivated' };
+  }
+
   @Get('activity-feed')
   @UsePipes(
     new ValidationPipe({
@@ -198,7 +221,6 @@ export class UsersController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get user by ID' })
-  @ApiParam({ name: 'id', description: 'User UUID' })
   @ApiResponse({ status: 200, description: 'User found' })
   @ApiResponse({ status: 404, description: 'User not found' })
   async findOne(@Param('id') id: string) {
@@ -223,20 +245,9 @@ export class UsersController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete user by ID' })
-  @ApiParam({ name: 'id', description: 'User UUID' })
   @ApiResponse({ status: 200, description: 'User deleted' })
   async remove(@Param('id') id: string) {
     return { deleted: id };
-  }
-
-  @Post('deactivate')
-  @HttpCode(200)
-  async deactivate(
-    @Req() req: AuthenticatedRequest,
-  ): Promise<{ message: string }> {
-    const userId = this.extractUserId(req);
-    await this.usersService.deactivateUser(userId);
-    return { message: 'Account successfully deactivated' };
   }
 
   private extractUserId(req: AuthenticatedRequest): string {
@@ -249,31 +260,5 @@ export class UsersController {
 
   private extractIpAddress(req: AuthenticatedRequest): string | undefined {
     return req.ip || req.headers?.['x-forwarded-for']?.toString()?.split(',')[0]?.trim();
-  }
-
-  @Post('data-export')
-  @HttpCode(HttpStatus.ACCEPTED)
-  async requestDataExport(@Req() req: AuthenticatedRequest) {
-    const userId = this.extractUserId(req);
-    await this.queueService.addJob(
-      DATA_PROCESSING_QUEUE,
-      DATA_EXPORT_JOB,
-      { userId },
-      { maxRetries: 3 },
-    );
-
-    return { message: 'Export job queued' };
-  }
-
-    @Patch('profile')
-  @UseGuards(JwtAuthGuard)
-  async updateProfile(
-    @Req() req,
-    @Body() dto: UpdateProfileDto,
-  ) {
-    return this.usersService.updateProfile(
-      req.user.id,
-      dto,
-    );
   }
 }
