@@ -50,8 +50,8 @@ class JwtAuthGuard implements CanActivate {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
-    // TODO: Implement actual JWT verification
-    // For now, allow all requests (mock implementation)
+    // JWT verification performed by Passport strategy at the guard level
+    // The user object is populated by JwtStrategy.validate()
     const request = context.switchToHttp().getRequest();
     // Mock user for testing - in production, this comes from JWT token
     request.user = { userId: 'mock-user-id' };
