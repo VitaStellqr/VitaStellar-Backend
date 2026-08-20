@@ -21,6 +21,7 @@ import { AdminModule } from '@modules/admin/admin.module';
 import { ReportsModule } from '@modules/reports/reports.module';
 // 1. Import the new StorageModule
 import { StorageModule } from './shared/storage/storage.module';
+import { MailModule } from './shared/mail/mail.module';
 import { MetricsModule } from './shared/metrics/metrics.module';
 import { UsageModule } from './modules/usage/usage.module';
 import { MonitoringModule } from './shared/monitoring/monitoring.module';
@@ -68,8 +69,8 @@ import { HealthProfileModule } from './users/health-profile/health-profile.modul
     DatabaseModule,
     OtpModule,
     LoggingModule,
-    // 2. Add it to the imports list
     StorageModule,
+    MailModule,
     CacheModule,
     MetricsModule,
     AnalyticsModule,

@@ -24,6 +24,17 @@ export const envValidationSchema = Joi.object({
   TWILIO_ACCOUNT_SID: Joi.string().optional(),
   TWILIO_AUTH_TOKEN: Joi.string().optional(),
   TWILIO_PHONE_NUMBER: Joi.string().optional(),
+
+  // ── SMTP Email (optional — falls back to console logging if unconfigured) ──
+  SMTP_HOST: Joi.string().optional(),
+  SMTP_PORT: Joi.number().integer().min(1).max(65535).default(587).optional(),
+  SMTP_USER: Joi.string().optional(),
+  SMTP_PASS: Joi.string().optional(),
+  SMTP_FROM: Joi.string().email().optional(),
+
+  // ── Frontend URL (for verification/reset links) ────────────────────────────
+  FRONTEND_URL: Joi.string().uri().optional(),
+
   SECRETS_VAULT_KEY: Joi.string().min(32).optional(),
   SECRETS_VAULT_FILE: Joi.string().optional(),
   SECRETS_AUDIT_LOG: Joi.string().optional(),
@@ -44,6 +55,12 @@ export interface ValidatedEnv {
   TWILIO_ACCOUNT_SID?: string;
   TWILIO_AUTH_TOKEN?: string;
   TWILIO_PHONE_NUMBER?: string;
+  SMTP_HOST?: string;
+  SMTP_PORT?: number;
+  SMTP_USER?: string;
+  SMTP_PASS?: string;
+  SMTP_FROM?: string;
+  FRONTEND_URL?: string;
   STELLAR_NETWORK: 'testnet' | 'mainnet';
   STELLAR_TREASURY_SECRET_KEY: string;
 }
