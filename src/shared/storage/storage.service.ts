@@ -1,8 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, LessThan } from 'typeorm';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { createHash, randomBytes } from 'crypto';
+import { DataExportToken } from '../../database/entities/data-export-token.entity';
 
 export interface UploadResult {
   filename: string;
@@ -23,8 +26,12 @@ export interface DataExportResult {
 @Injectable()
 export class StorageService {
   private readonly uploadDir = join(process.cwd(), 'uploads');
+  private readonly logger = new Logger(StorageService.name);
 
-  constructor() {
+  constructor(
+    @InjectRepository(DataExportToken)
+    private readonly exportTokenRepo: Repository<DataExportToken>,
+  ) {
     this.ensureUploadDir();
   }
 
@@ -36,23 +43,14 @@ export class StorageService {
     }
   }
 
-  /**
-   * Upload a file from a Multer-like file object, returning its key.
-   * Wraps saveFile for compatibility with modules expecting S3-style API.
-   */
   async uploadFile(
     file: { originalname: string; buffer: Buffer; mimetype: string },
     folder: string = 'general'
   ): Promise<string> {
     const result = await this.saveFile(file.buffer, file.originalname, file.mimetype, folder);
-    // Return the relative path as the "key" for later retrieval
     return folder ? `${folder}/${result.filename}` : result.filename;
   }
 
-  /**
-   * Get a download URL for a previously uploaded file.
-   * Returns a local /uploads/... URL for local storage.
-   */
   async getDownloadUrl(fileKey: string): Promise<string> {
     return `/uploads/${fileKey}`;
   }
@@ -88,8 +86,7 @@ export class StorageService {
     try {
       await fs.unlink(filePath);
     } catch (error) {
-      const logger = new Logger(StorageService.name);
-      logger.error('Failed to delete file:', error instanceof Error ? error.stack : String(error));
+      this.logger.error('Failed to delete file:', error instanceof Error ? error.stack : String(error));
     }
   }
 
@@ -134,6 +131,8 @@ export class StorageService {
 
   /**
    * Persist a GDPR JSON export and return a time-limited download token (24h).
+   * Token metadata is stored in the database with a SHA-256 hash of the token;
+   * the plaintext token is returned to the caller only (for emailing).
    */
   async saveDataExport(
     userId: string,
@@ -148,56 +147,67 @@ export class StorageService {
     const saved = await this.saveFile(content, filename, 'application/json', subfolder);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    const tokenPath = join(this.uploadDir, 'exports', '.tokens', `${downloadToken}.json`);
-    await this.ensureDirectoryExists(join(this.uploadDir, 'exports', '.tokens'));
-    await fs.writeFile(
-      tokenPath,
-      JSON.stringify({
-        userId,
-        exportId,
-        filePath: saved.path,
-        expiresAt: expiresAt.toISOString(),
-      }),
-      'utf-8'
-    );
+    const tokenRecord = this.exportTokenRepo.create({
+      userId,
+      exportId,
+      tokenHash: this.hashDownloadToken(downloadToken),
+      filePath: saved.path,
+      expiresAt,
+    });
+    await this.exportTokenRepo.save(tokenRecord);
 
     return { exportId, filePath: saved.path, downloadToken, expiresAt };
   }
 
+  /**
+   * Resolve a download token: look up by SHA-256 hash, enforce expiry and
+   * one-time use. Returns null if the token is invalid, expired, or already
+   * consumed.
+   */
   async resolveDataExportDownload(
     downloadToken: string
   ): Promise<{ filePath: string; userId: string; exportId: string } | null> {
-    const tokenPath = join(this.uploadDir, 'exports', '.tokens', `${downloadToken}.json`);
+    const tokenHash = this.hashDownloadToken(downloadToken);
 
-    if (!(await this.fileExists(tokenPath))) {
+    const record = await this.exportTokenRepo.findOne({
+      where: { tokenHash },
+    });
+
+    if (!record) {
       return null;
     }
 
-    const raw = await fs.readFile(tokenPath, 'utf-8');
-    const meta = JSON.parse(raw) as {
-      userId: string;
-      exportId: string;
-      filePath: string;
-      expiresAt: string;
-    };
-
-    if (new Date(meta.expiresAt).getTime() < Date.now()) {
-      await this.deleteFile(tokenPath);
-      if (await this.fileExists(meta.filePath)) {
-        await this.deleteFile(meta.filePath);
-      }
+    if (record.expiresAt.getTime() < Date.now()) {
+      await this.cleanupExportRecord(record);
       return null;
     }
 
-    if (!(await this.fileExists(meta.filePath))) {
+    if (record.consumedAt) {
+      return null;
+    }
+
+    if (!(await this.fileExists(record.filePath))) {
       return null;
     }
 
     return {
-      filePath: meta.filePath,
-      userId: meta.userId,
-      exportId: meta.exportId,
+      filePath: record.filePath,
+      userId: record.userId,
+      exportId: record.exportId,
     };
+  }
+
+  /**
+   * Mark a token as consumed (one-time use). Call this after the export file
+   * has been successfully sent to the client.
+   */
+  async consumeExportToken(downloadToken: string): Promise<void> {
+    const tokenHash = this.hashDownloadToken(downloadToken);
+    const record = await this.exportTokenRepo.findOne({ where: { tokenHash } });
+    if (record && !record.consumedAt) {
+      record.consumedAt = new Date();
+      await this.exportTokenRepo.save(record);
+    }
   }
 
   buildDataExportDownloadUrl(downloadToken: string, baseUrl?: string): string {
@@ -207,5 +217,40 @@ export class StorageService {
 
   hashDownloadToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
+  }
+
+  /**
+   * Remove expired or consumed export tokens and their associated files.
+   * Called by the cleanup scheduler.
+   */
+  async cleanupExpiredExports(): Promise<number> {
+    const now = new Date();
+    const expiredRecords = await this.exportTokenRepo.find({
+      where: [
+        { expiresAt: LessThan(now) },
+      ],
+    });
+
+    let cleaned = 0;
+    for (const record of expiredRecords) {
+      await this.cleanupExportRecord(record);
+      cleaned++;
+    }
+
+    return cleaned;
+  }
+
+  private async cleanupExportRecord(record: DataExportToken): Promise<void> {
+    try {
+      if (record.filePath && (await this.fileExists(record.filePath))) {
+        await this.deleteFile(record.filePath);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Failed to delete export file ${record.filePath}: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+
+    await this.exportTokenRepo.remove(record);
   }
 }

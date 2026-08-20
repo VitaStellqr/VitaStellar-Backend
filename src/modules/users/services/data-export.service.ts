@@ -125,11 +125,13 @@ export class DataExportService {
   }> {
     const resolved = await this.storageService.resolveDataExportDownload(downloadToken);
     if (!resolved) {
-      throw new NotFoundException('Export link is invalid or expired');
+      throw new NotFoundException('Export link is invalid, expired, or already downloaded');
     }
 
     const { readFile } = await import('fs/promises');
     const content = await readFile(resolved.filePath);
+
+    await this.storageService.consumeExportToken(downloadToken);
 
     return {
       content,

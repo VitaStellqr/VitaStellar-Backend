@@ -4,11 +4,13 @@ module.exports = {
   rootDir: 'src',
   testMatch: [
     '<rootDir>/modules/users/services/activity-feed.service.spec.ts',
+    '<rootDir>/modules/users/services/data-export.service.spec.ts',
     '<rootDir>/leaderboard/leaderboard.service.spec.ts',
     '<rootDir>/users/health-profile/health-profile.service.spec.ts',
     '<rootDir>/tasks/assignment/bulk-task-assignment.service.spec.ts',
     '<rootDir>/modules/admin/admin-tasks.controller.spec.ts',
     '<rootDir>/shared/queue/queue.service.spec.ts',
+    '<rootDir>/shared/storage/storage.service.spec.ts',
     '<rootDir>/referral/referral.service.spec.ts',
     '<rootDir>/rewards/rewards.service.spec.ts',
   ],

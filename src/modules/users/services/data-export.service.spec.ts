@@ -28,6 +28,7 @@ describe('DataExportService', () => {
     saveDataExport: jest.fn(),
     buildDataExportDownloadUrl: jest.fn().mockReturnValue('http://localhost/download'),
     resolveDataExportDownload: jest.fn(),
+    consumeExportToken: jest.fn().mockResolvedValue(undefined),
   };
 
   const mockNotificationService = {
@@ -125,6 +126,34 @@ describe('DataExportService', () => {
           expiresInHours: 24,
         }),
       );
+    });
+  });
+
+  describe('readExportFile', () => {
+    it('consumes token after successful read', async () => {
+      const fakeContent = Buffer.from('{"data":"test"}');
+      mockStorageService.resolveDataExportDownload.mockResolvedValue({
+        filePath: '/tmp/export.json',
+        userId: 'user-1',
+        exportId: 'export-1',
+      });
+
+      jest.mock('fs/promises', () => ({
+        readFile: jest.fn().mockResolvedValue(fakeContent),
+      }));
+
+      const result = await service.readExportFile('valid-token');
+
+      expect(mockStorageService.resolveDataExportDownload).toHaveBeenCalledWith('valid-token');
+      expect(mockStorageService.consumeExportToken).toHaveBeenCalledWith('valid-token');
+      expect(result.userId).toBe('user-1');
+      expect(result.exportId).toBe('export-1');
+    });
+
+    it('throws NotFoundException for invalid token', async () => {
+      mockStorageService.resolveDataExportDownload.mockResolvedValue(null);
+
+      await expect(service.readExportFile('bad-token')).rejects.toThrow(NotFoundException);
     });
   });
 });
