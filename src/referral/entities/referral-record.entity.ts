@@ -5,6 +5,7 @@ import {
   Column,
   CreateDateColumn,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../../entities/user.entity';
 
@@ -19,6 +20,7 @@ export class ReferralRecord {
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'referred_id' })
+  @Index('UQ_referral_records_referred_id', { unique: true })
   referred: User;
 
   @Column({ default: false })

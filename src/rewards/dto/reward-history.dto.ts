@@ -79,7 +79,7 @@ export class RewardHistoryItemDto {
   stellarTxHash?: string;
 
   @ApiProperty({
-    description: 'Title of the health task',
+    description: 'Title of the health task (or "Referral Reward" for referral sources)',
     type: String,
   })
   taskTitle: string;
@@ -89,6 +89,13 @@ export class RewardHistoryItemDto {
     type: String,
   })
   categoryId?: string;
+
+  @ApiProperty({
+    description: 'Source of the reward (task_completion or referral)',
+    enum: ['task_completion', 'referral'],
+    type: String,
+  })
+  sourceType: string;
 
   @ApiProperty({
     description: 'When the reward transaction was created',

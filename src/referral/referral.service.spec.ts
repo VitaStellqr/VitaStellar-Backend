@@ -112,7 +112,7 @@ describe('ReferralService', () => {
         referredBy: { id: 'referrer' },
       });
       mockReferralRepo.findOne.mockResolvedValue(null);
-      mockReferralRepo.save.mockImplementation((r) => Promise.resolve(r));
+      mockReferralRepo.save.mockImplementation((r) => { r.id = 'rec-1'; return Promise.resolve(r); });
 
       await service.handleFirstHealthTaskCompletion({
         userId: 'referred',
@@ -124,9 +124,11 @@ describe('ReferralService', () => {
         expect.objectContaining({
           userId: 'referrer',
           xlmAmount: 1,
+          sourceType: 'referral',
+          referralRecordId: 'rec-1',
         }),
       );
-      expect(mockReferralRepo.save).toHaveBeenCalledWith(
+      expect(mockReferralRepo.save).not.toHaveBeenCalledWith(
         expect.objectContaining({ rewardPaid: true }),
       );
     });
@@ -137,6 +139,115 @@ describe('ReferralService', () => {
       await service.handleFirstHealthTaskCompletion({ userId: 'solo' });
 
       expect(mockRewardQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('does not mark rewardPaid before payout succeeds', async () => {
+      mockUserRepo.findOne.mockResolvedValue({
+        id: 'referred',
+        referredBy: { id: 'referrer' },
+      });
+      mockReferralRepo.findOne.mockResolvedValue(null);
+      mockReferralRepo.save.mockImplementation((r) => Promise.resolve({ ...r, id: 'rec-2' }));
+
+      await service.handleFirstHealthTaskCompletion({
+        userId: 'referred',
+        completionId: 'completion-1',
+      });
+
+      const saveCall = mockReferralRepo.save.mock.calls[0][0];
+      expect(saveCall.rewardPaid).toBe(false);
+      expect(saveCall.rewardPaidAt).toBeUndefined();
+    });
+
+    it('produces exactly one job for duplicate concurrent events', async () => {
+      mockUserRepo.findOne.mockResolvedValue({
+        id: 'referred',
+        referredBy: { id: 'referrer' },
+      });
+      mockReferralRepo.findOne.mockResolvedValue(null);
+      let callCount = 0;
+      mockReferralRepo.save.mockImplementation((r) => {
+        callCount++;
+        if (callCount === 2) {
+          const err = new Error('unique violation') as any;
+          err.code = '23505';
+          return Promise.reject(err);
+        }
+        r.id = 'rec-3';
+        return Promise.resolve(r);
+      });
+
+      await service.handleFirstHealthTaskCompletion({
+        userId: 'referred',
+        completionId: 'completion-1',
+      });
+      await service.handleFirstHealthTaskCompletion({
+        userId: 'referred',
+        completionId: 'completion-1',
+      });
+
+      expect(mockRewardQueue.add).toHaveBeenCalledTimes(1);
+    });
+
+    it('skips if record already exists with rewardPaid=true', async () => {
+      mockUserRepo.findOne.mockResolvedValue({
+        id: 'referred',
+        referredBy: { id: 'referrer' },
+      });
+      mockReferralRepo.findOne.mockResolvedValue({ id: 'rec-4', rewardPaid: true });
+
+      await service.handleFirstHealthTaskCompletion({
+        userId: 'referred',
+        completionId: 'completion-1',
+      });
+
+      expect(mockRewardQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('skips if record already exists and is queued (rewardPaid=false)', async () => {
+      mockUserRepo.findOne.mockResolvedValue({
+        id: 'referred',
+        referredBy: { id: 'referrer' },
+      });
+      mockReferralRepo.findOne.mockResolvedValue({ id: 'rec-5', rewardPaid: false });
+
+      await service.handleFirstHealthTaskCompletion({
+        userId: 'referred',
+        completionId: 'completion-1',
+      });
+
+      expect(mockRewardQueue.add).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleReferralRewardPaid', () => {
+    it('marks rewardPaid when payout succeeds', async () => {
+      const record = { id: 'rec-6', rewardPaid: false };
+      mockReferralRepo.findOne.mockResolvedValue(record);
+      mockReferralRepo.save.mockResolvedValue(record);
+
+      await service.handleReferralRewardPaid({ referralRecordId: 'rec-6' });
+
+      expect(record.rewardPaid).toBe(true);
+      expect(record.rewardPaidAt).toBeInstanceOf(Date);
+      expect(mockReferralRepo.save).toHaveBeenCalledWith(record);
+    });
+
+    it('skips if record already paid', async () => {
+      const record = { id: 'rec-7', rewardPaid: true };
+      mockReferralRepo.findOne.mockResolvedValue(record);
+
+      await service.handleReferralRewardPaid({ referralRecordId: 'rec-7' });
+
+      expect(mockReferralRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('skips if record not found', async () => {
+      mockReferralRepo.findOne.mockResolvedValue(null);
+
+      await service.handleReferralRewardPaid({ referralRecordId: 'nonexistent' });
+
+      expect(mockReferralRepo.save).not.toHaveBeenCalled();
     });
   });
 });

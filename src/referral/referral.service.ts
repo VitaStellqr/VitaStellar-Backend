@@ -109,32 +109,46 @@ export class ReferralService {
       where: { referred: { id: userId } },
     });
     if (existingRecord?.rewardPaid) return;
+    if (existingRecord?.id) return;
 
-    const record =
-      existingRecord ??
-      this.referralRepo.create({
-        referrer: user.referredBy,
-        referred: user,
-        rewardPaid: false,
-      });
+    const record = this.referralRepo.create({
+      referrer: user.referredBy,
+      referred: user,
+      rewardPaid: false,
+    });
 
-    if (record.rewardPaid) return;
-
-    const completionId = payload.completionId ?? `referral-first-task:${userId}`;
+    try {
+      await this.referralRepo.save(record);
+    } catch (error: any) {
+      if (error.code === '23505') return;
+      throw error;
+    }
 
     await this.rewardQueue.add(REWARD_DISTRIBUTION_JOB, {
-      completionId,
+      completionId: `referral:${record.id}`,
       userId: user.referredBy.id,
       xlmAmount: REFERRAL_REWARD_XLM,
+      sourceType: 'referral',
+      referralRecordId: record.id,
     });
+
+    this.logger.log(
+      `Referral reward queued for referrer ${user.referredBy.id} (referred user ${userId})`
+    );
+  }
+
+  @OnEvent('referral.reward.paid')
+  async handleReferralRewardPaid(payload: { referralRecordId: string }) {
+    const record = await this.referralRepo.findOne({
+      where: { id: payload.referralRecordId },
+    });
+    if (!record || record.rewardPaid) return;
 
     record.rewardPaid = true;
     record.rewardPaidAt = new Date();
     await this.referralRepo.save(record);
 
-    this.logger.log(
-      `Referral reward queued for referrer ${user.referredBy.id} (referred user ${userId})`
-    );
+    this.logger.log(`Referral reward confirmed for record ${record.id}`);
   }
 
   private async createUniqueCode(): Promise<string> {

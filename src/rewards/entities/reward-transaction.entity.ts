@@ -11,6 +11,7 @@ import { User } from '../../entities/user.entity';
 import { TaskCompletion } from '../../task-completion/entities/task-completion.entity';
 
 import { RewardStatus } from '../enums/reward-status.enum';
+import { RewardSourceType } from '../enums/reward-source-type.enum';
 
 @Entity('reward_transactions')
 export class RewardTransaction {
@@ -46,6 +47,16 @@ export class RewardTransaction {
   @ManyToOne(() => TaskCompletion, { nullable: true })
   @JoinColumn({ name: 'taskCompletionId' })
   task_completion?: TaskCompletion;
+
+  @Column({
+    type: 'enum',
+    enum: RewardSourceType,
+    default: RewardSourceType.TASK_COMPLETION,
+  })
+  sourceType: RewardSourceType;
+
+  @Column({ type: 'uuid', nullable: true })
+  referralRecordId?: string;
 
   @CreateDateColumn()
   createdAt: Date;

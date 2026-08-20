@@ -15,6 +15,8 @@ interface RewardJobData {
   completionId: string;
   userId: string;
   xlmAmount: number;
+  sourceType?: string;
+  referralRecordId?: string;
 }
 
 interface DeadLetterJobData {
@@ -43,8 +45,14 @@ export class RewardProcessor {
   @Process({ name: REWARD_DISTRIBUTION_JOB, concurrency: 5 })
   async handleRewardDistribution(job: Job<RewardJobData>) {
     this.logger.log(`Processing job ${job.id} for completion ${job.data.completionId}`);
-    const { completionId, userId, xlmAmount } = job.data;
-    await this.rewardService.processRewardJob(completionId, userId, xlmAmount);
+    const { completionId, userId, xlmAmount, sourceType, referralRecordId } = job.data;
+    await this.rewardService.processRewardJob(
+      completionId,
+      userId,
+      xlmAmount,
+      sourceType,
+      referralRecordId,
+    );
   }
 
   @OnQueueFailed()
@@ -53,7 +61,11 @@ export class RewardProcessor {
 
     // If we've reached max attempts limit, move to dead letter queue
     if (job.attemptsMade >= (job.opts.attempts || 3)) {
-      await this.rewardService.handleRewardFailure(job.data.completionId);
+      await this.rewardService.handleRewardFailure(
+        job.data.completionId,
+        job.data.sourceType,
+        job.data.referralRecordId,
+      );
 
       // Add to dead letter queue for persistence and admin review
       await this.dlq.add('process', {

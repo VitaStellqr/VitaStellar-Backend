@@ -6,6 +6,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { RewardService } from './reward.service';
 import { RewardTransaction } from './entities/reward-transaction.entity';
 import { RewardStatus } from './enums/reward-status.enum';
+import { RewardSourceType } from './enums/reward-source-type.enum';
 import { TaskCompletion } from '../task-completion/entities/task-completion.entity';
 import { HealthTask } from '../entities/health-task.entity';
 import {
@@ -394,6 +395,7 @@ describe('RewardService', () => {
         amount: 3.0,
         status: RewardStatus.PENDING,
         attempts: 0,
+        sourceType: 'task_completion',
       });
       expect(mockRewardTransactionRepo.save).toHaveBeenCalled();
     });
@@ -505,5 +507,71 @@ describe('RewardService', () => {
         expect(mockEventEmitter.emit).toHaveBeenCalledTimes(expectedCount);
       },
     );
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Referral reward processing
+  // ──────────────────────────────────────────────────────────────────────────
+
+  describe('processRewardJob (referral)', () => {
+    it('should create a referral transaction without taskCompletionId', async () => {
+      mockRewardTransactionRepo.findOne.mockResolvedValue(null);
+      const created = { attempts: 0, status: RewardStatus.PENDING };
+      mockRewardTransactionRepo.create.mockReturnValue(created);
+      mockRewardTransactionRepo.save.mockResolvedValue(created);
+
+      await service.processRewardJob('referral:rec-1', 'referrer-1', 1.0, 'referral', 'rec-1');
+
+      expect(mockRewardTransactionRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sourceType: 'referral',
+          referralRecordId: 'rec-1',
+        }),
+      );
+      const createArg = mockRewardTransactionRepo.create.mock.calls[0][0];
+      expect(createArg).not.toHaveProperty('task_completion');
+    });
+
+    it('should emit referral.reward.paid on success', async () => {
+      const transaction = { attempts: 0, status: RewardStatus.PENDING };
+      mockRewardTransactionRepo.findOne.mockResolvedValue(null);
+      mockRewardTransactionRepo.create.mockReturnValue(transaction);
+      mockRewardTransactionRepo.save.mockResolvedValue(transaction);
+
+      await service.processRewardJob('referral:rec-1', 'referrer-1', 1.0, 'referral', 'rec-1');
+
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith('referral.reward.paid', {
+        referralRecordId: 'rec-1',
+      });
+    });
+
+    it('should not emit referral.reward.paid for task completion rewards', async () => {
+      const transaction = { attempts: 0, status: RewardStatus.PENDING };
+      mockRewardTransactionRepo.findOne.mockResolvedValue(null);
+      mockRewardTransactionRepo.create.mockReturnValue(transaction);
+      mockRewardTransactionRepo.save.mockResolvedValue(transaction);
+
+      await service.processRewardJob('comp-1', 'user-1', 2.5);
+
+      expect(mockEventEmitter.emit).not.toHaveBeenCalledWith(
+        'referral.reward.paid',
+        expect.anything(),
+      );
+    });
+  });
+
+  describe('handleRewardFailure (referral)', () => {
+    it('should find referral transaction by referralRecordId', async () => {
+      const transaction = { status: RewardStatus.PENDING };
+      mockRewardTransactionRepo.findOne.mockResolvedValue(transaction);
+      mockRewardTransactionRepo.save.mockResolvedValue(transaction);
+
+      await service.handleRewardFailure('referral:rec-1', 'referral', 'rec-1');
+
+      expect(mockRewardTransactionRepo.findOne).toHaveBeenCalledWith({
+        where: { referralRecordId: 'rec-1' },
+      });
+      expect(transaction.status).toBe(RewardStatus.FAILED);
+    });
   });
 });

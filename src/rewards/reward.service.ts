@@ -13,6 +13,7 @@ import {
 } from './dto/reward-history.dto';
 import { RewardTransaction } from './entities/reward-transaction.entity';
 import { RewardStatus } from './enums/reward-status.enum';
+import { RewardSourceType } from './enums/reward-source-type.enum';
 import { TaskCompletion } from '../task-completion/entities/task-completion.entity';
 import { HealthTask } from '../entities/health-task.entity';
 import { REWARD_QUEUE, REWARD_DISTRIBUTION_JOB } from '../queue/queue.constants';
@@ -131,8 +132,12 @@ export class RewardService {
       status: transaction.status,
       stellarTxHash:
         transaction.status === RewardStatus.SUCCESS ? transaction.stellarTxHash : undefined,
-      taskTitle: transaction.task_completion?.health_task?.title || 'Unknown Task',
+      taskTitle:
+        transaction.sourceType === RewardSourceType.REFERRAL
+          ? 'Referral Reward'
+          : transaction.task_completion?.health_task?.title || 'Unknown Task',
       categoryId: transaction.task_completion?.health_task?.categoryId,
+      sourceType: transaction.sourceType,
       createdAt: transaction.createdAt,
     }));
 
@@ -150,21 +155,46 @@ export class RewardService {
     return result;
   }
 
-  async processRewardJob(completionId: string, userId: string, amount: number): Promise<void> {
-    this.logger.log(`Processing reward for user ${userId}, completion ${completionId}`);
+  async processRewardJob(
+    completionId: string,
+    userId: string,
+    amount: number,
+    sourceType?: string,
+    referralRecordId?: string,
+  ): Promise<void> {
+    const isReferral = sourceType === 'referral' && referralRecordId;
+    this.logger.log(
+      `Processing reward for user ${userId}, ${isReferral ? `referral ${referralRecordId}` : `completion ${completionId}`}`
+    );
 
-    let transaction = await this.rewardTransactionRepository.findOne({
-      where: { taskCompletionId: completionId },
-    });
+    let transaction: RewardTransaction | null = null;
+
+    if (isReferral) {
+      transaction = await this.rewardTransactionRepository.findOne({
+        where: { referralRecordId },
+      });
+    } else {
+      transaction = await this.rewardTransactionRepository.findOne({
+        where: { taskCompletionId: completionId },
+      });
+    }
 
     if (!transaction) {
-      transaction = this.rewardTransactionRepository.create({
+      const createData: Partial<RewardTransaction> = {
         user: { id: userId } as any,
-        task_completion: { id: completionId } as any,
         amount,
         status: RewardStatus.PENDING,
         attempts: 0,
-      });
+        sourceType: (sourceType as RewardSourceType) || RewardSourceType.TASK_COMPLETION,
+      };
+
+      if (isReferral) {
+        createData.referralRecordId = referralRecordId;
+      } else {
+        createData.task_completion = { id: completionId } as any;
+      }
+
+      transaction = this.rewardTransactionRepository.create(createData);
       await this.rewardTransactionRepository.save(transaction);
     }
 
@@ -180,6 +210,10 @@ export class RewardService {
       await this.rewardTransactionRepository.save(transaction);
 
       this.logger.log(`Successfully distributed ${amount} XLM to user ${userId}`);
+
+      if (isReferral) {
+        this.eventEmitter.emit('referral.reward.paid', { referralRecordId });
+      }
     } catch (error) {
       transaction.status = RewardStatus.FAILED;
       await this.rewardTransactionRepository.save(transaction);
@@ -187,16 +221,31 @@ export class RewardService {
     }
   }
 
-  async handleRewardFailure(completionId: string) {
-    const transaction = await this.rewardTransactionRepository.findOne({
-      where: { taskCompletionId: completionId },
-    });
+  async handleRewardFailure(
+    completionId: string,
+    sourceType?: string,
+    referralRecordId?: string,
+  ) {
+    const isReferral = sourceType === 'referral' && referralRecordId;
+
+    let transaction: RewardTransaction | null = null;
+    if (isReferral) {
+      transaction = await this.rewardTransactionRepository.findOne({
+        where: { referralRecordId },
+      });
+    } else {
+      transaction = await this.rewardTransactionRepository.findOne({
+        where: { taskCompletionId: completionId },
+      });
+    }
 
     if (transaction) {
       transaction.status = RewardStatus.FAILED;
       await this.rewardTransactionRepository.save(transaction);
     }
 
-    this.logger.error(`Max retries reached for completion ${completionId}. Marking as FAILED.`);
+    this.logger.error(
+      `Max retries reached for ${isReferral ? `referral ${referralRecordId}` : `completion ${completionId}`}. Marking as FAILED.`
+    );
   }
 }
