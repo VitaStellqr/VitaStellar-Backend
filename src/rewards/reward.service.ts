@@ -121,7 +121,7 @@ export class RewardService {
     const queryBuilder = this.rewardTransactionRepository
       .createQueryBuilder('reward_transaction')
       .leftJoinAndSelect('reward_transaction.task_completion', 'task_completion')
-      .leftJoinAndSelect('task_completion.health_task', 'health_task')
+      .leftJoinAndSelect('task_completion.task', 'task')
       .where('reward_transaction.userId = :userId', { userId })
       .orderBy('reward_transaction.createdAt', 'DESC');
 
@@ -140,7 +140,7 @@ export class RewardService {
 
     // Apply category filter
     if (categoryId) {
-      queryBuilder.andWhere('health_task.categoryId = :categoryId', {
+      queryBuilder.andWhere('task.categoryId = :categoryId', {
         categoryId,
       });
     }

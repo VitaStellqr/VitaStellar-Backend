@@ -222,7 +222,7 @@ describe('RewardService', () => {
         stellarTxHash: 'hash-1',
         createdAt: new Date('2024-06-01'),
         task_completion: {
-          health_task: { title: 'Drink Water', categoryId: 'cat-hydration' },
+          task: { title: 'Drink Water', categoryId: 'cat-hydration' },
         } as any,
       },
       {
@@ -232,7 +232,7 @@ describe('RewardService', () => {
         stellarTxHash: null,
         createdAt: new Date('2024-06-02'),
         task_completion: {
-          health_task: { title: '10k Steps', categoryId: 'cat-fitness' },
+          task: { title: '10k Steps', categoryId: 'cat-fitness' },
         } as any,
       },
     ];
@@ -260,6 +260,16 @@ describe('RewardService', () => {
       expect(result.page).toBe(1);
       expect(result.limit).toBe(20);
       expect(result.totalPages).toBe(1);
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'task_completion.task',
+        'task',
+      );
+      expect(result.data[0]).toEqual(
+        expect.objectContaining({
+          taskTitle: 'Drink Water',
+          categoryId: 'cat-hydration',
+        }),
+      );
 
       // Verify cache was set with 2-minute TTL
       expect(mockCacheManager.set).toHaveBeenCalledWith(
@@ -282,7 +292,7 @@ describe('RewardService', () => {
       expect(result.data[1].stellarTxHash).toBeUndefined();
     });
 
-    it('should use "Unknown Task" when health_task is missing', async () => {
+    it('should use "Unknown Task" for rewards without a task completion', async () => {
       mockCacheManager.get.mockResolvedValue(null);
       mockQueryBuilder.getCount.mockResolvedValue(1);
       mockQueryBuilder.getMany.mockResolvedValue([
@@ -342,7 +352,7 @@ describe('RewardService', () => {
       await service.getRewardHistory(userId, { categoryId: 'cat-fitness' });
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'health_task.categoryId = :categoryId',
+        'task.categoryId = :categoryId',
         { categoryId: 'cat-fitness' },
       );
     });
