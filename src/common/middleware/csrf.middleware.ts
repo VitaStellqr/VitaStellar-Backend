@@ -9,8 +9,11 @@ export class CsrfMiddleware implements NestMiddleware {
   private readonly headerName = 'x-csrf-token';
 
   use(req: Request, res: Response, next: NextFunction) {
+    const cookies = req.cookies || this.parseCookies(req.headers.cookie);
+    const existingToken = cookies[this.cookieName];
+
     // Generate CSRF token for new sessions
-    if (!req.cookies[this.cookieName]) {
+    if (!existingToken) {
       const token = this.generateToken();
       res.cookie(this.cookieName, token, {
         httpOnly: false, // Allow JavaScript access for SPAs
@@ -20,7 +23,7 @@ export class CsrfMiddleware implements NestMiddleware {
       });
       req.csrfToken = token;
     } else {
-      req.csrfToken = req.cookies[this.cookieName];
+      req.csrfToken = existingToken;
     }
 
     // Skip CSRF validation for safe methods
@@ -43,6 +46,17 @@ export class CsrfMiddleware implements NestMiddleware {
     }
 
     next();
+  }
+
+  private parseCookies(cookieHeader?: string): Record<string, string> {
+    if (!cookieHeader) return {};
+    return cookieHeader.split(';').reduce((acc, item) => {
+      const [key, val] = item.trim().split('=');
+      if (key && val) {
+        acc[key] = decodeURIComponent(val);
+      }
+      return acc;
+    }, {} as Record<string, string>);
   }
 
   private generateToken(): string {
