@@ -34,6 +34,8 @@ export class RewardService {
     private readonly taskCompletionRepository: Repository<TaskCompletion>,
     @InjectRepository(HealthTask)
     private readonly healthTaskRepository: Repository<HealthTask>,
+    @InjectRepository(UserMilestone)
+    private readonly userMilestoneRepository: Repository<UserMilestone>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     @InjectRepository(UserMilestone)
@@ -98,9 +100,7 @@ export class RewardService {
           milestoneReached: milestone,
         });
 
-        this.logger.log(
-          `Emitted ${REWARD_MILESTONE_EVENT} for user ${userId}: ${milestone} XLM`
-        );
+        this.logger.log(`Emitted ${REWARD_MILESTONE_EVENT} for user ${userId}: ${milestone} XLM`);
       }
     }
   }
@@ -152,7 +152,7 @@ export class RewardService {
     userId: string,
     queryDto: RewardHistoryQueryDto
   ): Promise<RewardHistoryResponseDto> {
-    const { page = 1, limit = 20, startDate, endDate, categoryId } = queryDto;
+    const { page = 1, limit = 20, startDate, endDate, categoryId, status } = queryDto;
     const skip = (page - 1) * limit;
 
     // Create cache key
@@ -189,6 +189,13 @@ export class RewardService {
     if (categoryId) {
       queryBuilder.andWhere('health_task.categoryId = :categoryId', {
         categoryId,
+      });
+    }
+
+    // Apply status filter
+    if (status) {
+      queryBuilder.andWhere('reward_transaction.status = :status', {
+        status,
       });
     }
 
@@ -239,7 +246,16 @@ export class RewardService {
     // This prevents duplicate payouts from Bull retries or at-least-once delivery.
     if (transaction && transaction.status === RewardStatus.SUCCESS) {
       this.logger.warn(
-        `Reward for completion ${completionId} already succeeded (tx ${transaction.id}); skipping duplicate job`,
+        `Reward for completion ${completionId} already succeeded (tx ${transaction.id}); skipping duplicate job`
+      );
+      return;
+    }
+
+    // Idempotency guard: if this completion has already been paid, do nothing.
+    // This prevents duplicate payouts from Bull retries or at-least-once delivery.
+    if (transaction && transaction.status === RewardStatus.SUCCESS) {
+      this.logger.warn(
+        `Reward for completion ${completionId} already succeeded (tx ${transaction.id}); skipping duplicate job`
       );
       return;
     }
@@ -266,7 +282,10 @@ export class RewardService {
     const walletAddress = user.stellarWalletAddress || user.walletAddress;
     if (!walletAddress) {
       this.logger.warn(
-        `User ${userId} has no linked Stellar wallet; leaving reward PENDING for retry after wallet link`,
+        `User ${userId} has no linked Stellar wallet; marking reward PENDING for later retry`
+      );
+      throw new Error(
+        `User ${userId} has no linked Stellar wallet address; cannot complete payout`
       );
       transaction.status = RewardStatus.PENDING;
       await this.rewardTransactionRepository.save(transaction);
@@ -281,7 +300,7 @@ export class RewardService {
       await this.rewardTransactionRepository.save(transaction);
 
       this.logger.log(
-        `Successfully distributed ${amount} XLM to user ${userId} (tx: ${result.stellarTxHash})`,
+        `Successfully distributed ${amount} XLM to user ${userId} (tx: ${result.stellarTxHash})`
       );
     } catch (error) {
       transaction.status = RewardStatus.FAILED;

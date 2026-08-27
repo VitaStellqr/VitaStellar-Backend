@@ -80,6 +80,7 @@ describe('RewardService', () => {
         { provide: getRepositoryToken(RewardTransaction), useValue: mockRewardTransactionRepo },
         { provide: getRepositoryToken(TaskCompletion), useValue: mockTaskCompletionRepo },
         { provide: getRepositoryToken(HealthTask), useValue: mockHealthTaskRepo },
+        { provide: getRepositoryToken(UserMilestone), useValue: mockUserMilestoneRepo },
         { provide: getRepositoryToken(User), useValue: mockUserRepo },
         { provide: getRepositoryToken(UserMilestone), useValue: mockUserMilestoneRepo },
         { provide: CACHE_MANAGER, useValue: mockCacheManager },
