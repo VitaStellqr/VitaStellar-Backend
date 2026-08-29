@@ -38,13 +38,9 @@ export class RewardService {
     private readonly userMilestoneRepository: Repository<UserMilestone>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    @InjectRepository(UserMilestone)
-    private readonly userMilestoneRepository: Repository<UserMilestone>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     @InjectQueue(REWARD_QUEUE) private readonly rewardQueue: Queue,
     private readonly eventEmitter: EventEmitter2,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
     private readonly stellarService: StellarService
   ) {}
 
@@ -251,15 +247,6 @@ export class RewardService {
       return;
     }
 
-    // Idempotency guard: if this completion has already been paid, do nothing.
-    // This prevents duplicate payouts from Bull retries or at-least-once delivery.
-    if (transaction && transaction.status === RewardStatus.SUCCESS) {
-      this.logger.warn(
-        `Reward for completion ${completionId} already succeeded (tx ${transaction.id}); skipping duplicate job`
-      );
-      return;
-    }
-
     if (!transaction) {
       transaction = this.rewardTransactionRepository.create({
         user: { id: userId } as any,
@@ -287,9 +274,6 @@ export class RewardService {
       throw new Error(
         `User ${userId} has no linked Stellar wallet address; cannot complete payout`
       );
-      transaction.status = RewardStatus.PENDING;
-      await this.rewardTransactionRepository.save(transaction);
-      return;
     }
 
     try {
