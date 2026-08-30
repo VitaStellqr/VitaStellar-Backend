@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import Redis from 'ioredis';
 import { redisConfig, getRedisUrl } from '../config/redis.config';
+import { SmsService } from '../shared/sms/sms.service';
 
 export interface OtpRequestResult {
   success: boolean;
@@ -40,7 +41,8 @@ export class OtpService {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly eventEmitter: EventEmitter2
+    private readonly eventEmitter: EventEmitter2,
+    private readonly smsService: SmsService
   ) {
     const config = redisConfig(configService);
     this.redis = new Redis(getRedisUrl(config));
@@ -67,6 +69,7 @@ export class OtpService {
         lockoutMinutes: Math.ceil(ttl / 60),
       };
     }
+
 
     // Check resend cooldown (60 seconds between requests)
     const cooldownTtl = await this.redis.ttl(resendCooldownKey);
@@ -112,14 +115,27 @@ export class OtpService {
     const newCount = currentCount + 1;
     const remainingAttempts = this.MAX_REQUESTS_PER_HOUR - newCount;
 
-    // Emit event for SMS sending
-    this.eventEmitter.emit('otp.requested', {
+       // Deliver the OTP via SMS. The code itself is never put on the event
+    // bus — only a post-delivery confirmation event, with no secret attached.
+    try {
+      await this.smsService.sendVerificationCode(normalizedPhone, otp);
+    } catch (error) {
+      this.logger.error(
+        `Failed to deliver OTP SMS for ${normalizedPhone}: ${(error as Error).message}`
+      );
+      return {
+        success: false,
+        message: 'Failed to send OTP. Please try again later.',
+        remainingAttempts,
+      };
+    }
+
+    this.eventEmitter.emit('otp.sent', {
       phoneNumber: normalizedPhone,
-      otp,
       remainingAttempts,
     });
 
-    this.logger.log(`OTP generated for ${normalizedPhone}`);
+    this.logger.log(`OTP delivered via SMS for ${normalizedPhone}`);
 
     return {
       success: true,

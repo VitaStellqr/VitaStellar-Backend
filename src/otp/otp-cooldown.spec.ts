@@ -8,7 +8,8 @@ const redisMock = {
   pipeline: jest.fn().mockReturnValue({
     incr: jest.fn().mockReturnThis(),
     expire: jest.fn().mockReturnThis(),
-    exec: jest.fn().mockResolvedValue([[null, 1]]),
+    setex: jest.fn().mockReturnThis(),
+    exec: jest.fn().mockResolvedValue([[null, 1], [null, 1], [null, 'OK']]),
   }),
   del: jest.fn(),
 };
@@ -21,14 +22,16 @@ jest.mock('../config/redis.config', () => ({
 
 const mockConfigService = { get: jest.fn().mockReturnValue(undefined) };
 const mockEventEmitter = { emit: jest.fn() };
+const mockSmsService = { sendVerificationCode: jest.fn().mockResolvedValue(undefined) };
 
 describe('OtpService — resend cooldown', () => {
   let service: OtpService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new OtpService(mockConfigService as any, mockEventEmitter as any);
+    service = new OtpService(mockConfigService as any, mockEventEmitter as any, mockSmsService as any);
   });
+
 
   it('should return 429-style response when cooldown is active', async () => {
     redisMock.exists.mockResolvedValue(0); // not locked
@@ -37,7 +40,7 @@ describe('OtpService — resend cooldown', () => {
     const result = await service.requestOtp('+2348012345678');
 
     expect(result.success).toBe(false);
-    expect(result.message).toContain('45');
+    expect(result.retryAfter).toBe(45);
   });
 
   it('should allow OTP request when cooldown has expired', async () => {

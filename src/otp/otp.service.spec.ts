@@ -3,12 +3,30 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import Redis from 'ioredis';
 import { OtpService } from './otp.service';
+import { SmsService } from '../shared/sms/sms.service';
+
+jest.mock('ioredis', () => jest.fn().mockImplementation(() => ({
+  exists: jest.fn(),
+  ttl: jest.fn(),
+  get: jest.fn(),
+  setex: jest.fn(),
+  del: jest.fn(),
+  incr: jest.fn(),
+  incrby: jest.fn(),
+  expire: jest.fn(),
+  pipeline: jest.fn(),
+})));
+jest.mock('../config/redis.config', () => ({
+  redisConfig: jest.fn().mockReturnValue({}),
+  getRedisUrl: jest.fn().mockReturnValue('redis://localhost:6379'),
+}));
 
 describe('OtpService', () => {
   let service: OtpService;
   let mockRedis: jest.Mocked<Redis>;
   let mockConfigService: jest.Mocked<ConfigService>;
   let mockEventEmitter: jest.Mocked<EventEmitter2>;
+  let mockSmsService: jest.Mocked<SmsService>;
 
   beforeEach(async () => {
     // Mock Redis
@@ -31,6 +49,9 @@ describe('OtpService', () => {
     mockEventEmitter = {
       emit: jest.fn(),
     } as any;
+    mockSmsService = {
+      sendVerificationCode: jest.fn().mockResolvedValue(undefined),
+    } as any;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -42,6 +63,10 @@ describe('OtpService', () => {
         {
           provide: EventEmitter2,
           useValue: mockEventEmitter,
+        },
+        {
+          provide: SmsService,
+          useValue: mockSmsService,
         },
       ],
     }).compile();
@@ -73,11 +98,14 @@ describe('OtpService', () => {
       expect(result.message).toBe('OTP sent successfully');
       expect(result.remainingAttempts).toBe(2);
       expect(result.retryAfter).toBeUndefined();
+      expect(mockSmsService.sendVerificationCode).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.any(String),
+      );
       expect(mockEventEmitter.emit).toHaveBeenCalledWith(
-        'otp.requested',
+        'otp.sent',
         expect.objectContaining({
           phoneNumber: expect.any(String),
-          otp: expect.any(String),
           remainingAttempts: 2,
         }),
       );
@@ -195,6 +223,53 @@ describe('OtpService', () => {
         'cooldown',
       );
     });
+    
+    it('should invoke SMS delivery with the generated OTP', async () => {
+      mockRedis.exists.mockResolvedValue(0);
+      mockRedis.ttl.mockResolvedValue(-2);
+      mockRedis.get.mockResolvedValue(null);
+
+      const mockPipeline = {
+        incr: jest.fn().mockReturnThis(),
+        expire: jest.fn().mockReturnThis(),
+        setex: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([[null, 1], [null, 1], [null, 'OK']]),
+      };
+      mockRedis.pipeline.mockReturnValue(mockPipeline as any);
+
+      await service.requestOtp(phoneNumber);
+
+      expect(mockSmsService.sendVerificationCode).toHaveBeenCalledTimes(1);
+      const [calledPhone, calledOtp] = mockSmsService.sendVerificationCode.mock.calls[0];
+      expect(calledPhone).toContain('1234567890');
+      expect(calledOtp).toMatch(/^\d{6}$/);
+    });
+
+    it('should return a distinct failure result when SMS delivery fails', async () => {
+      mockRedis.exists.mockResolvedValue(0);
+      mockRedis.ttl.mockResolvedValue(-2);
+      mockRedis.get.mockResolvedValue(null);
+
+      const mockPipeline = {
+        incr: jest.fn().mockReturnThis(),
+        expire: jest.fn().mockReturnThis(),
+        setex: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([[null, 1], [null, 1], [null, 'OK']]),
+      };
+      mockRedis.pipeline.mockReturnValue(mockPipeline as any);
+      mockSmsService.sendVerificationCode.mockRejectedValueOnce(
+        new Error('Twilio is not configured'),
+      );
+
+      const result = await service.requestOtp(phoneNumber);
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to send OTP. Please try again later.');
+      expect(mockEventEmitter.emit).not.toHaveBeenCalledWith(
+        'otp.sent',
+        expect.anything(),
+      );
+    });
   });
 
   describe('verifyOtp', () => {
@@ -305,3 +380,5 @@ describe('OtpService', () => {
     });
   });
 });
+
+
